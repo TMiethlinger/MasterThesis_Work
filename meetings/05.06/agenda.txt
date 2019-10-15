@@ -1,0 +1,25 @@
+1.) Distance Function
+	a.) Literatursuche
+		|.) V. I. Arnold: Mathematical Methods Of Classical Mechanics
+		||.) D. Hestenes: New Foundations for Classical Mechanics (Geometric Algebra)
+		|||.) B. Schutz: Geometrical Methods of Mathematical Physics
+	b.) Other
+		|.) https://physics.stackexchange.com/questions/13667/does-the-phase-space-configuration-and-momentum-space-of-particles-have-a-eucl
+	c.) Own considerations
+		|.) Taylor -> and we have up to now only used 1st order; we could use also 2nd order
+		||.) Action and Hamilton's Principle
+
+2.) Work: Simulations and analysis
+	a.) W.r.t. the 'TODO' from last week: Bring them next week.
+		|.) Wrong output due to method overloading
+		||.) Changed output due to feedback from J. Messner
+	b.) Propositions:
+		|.) Larger recurrence matrix from cont. density field
+		||.) Large recurrence matrix from cont. momentum / velocity field
+		|||.) Another case (Sphere->Wake flow, Blood flow?)
+
+3.) Started writing on the thesis
+	a.) Why: to order thoughts, establish notation, clear uncertainties
+	b.) Daniel Q.: Counts as working time
+	c.) Show Table of contents
+	

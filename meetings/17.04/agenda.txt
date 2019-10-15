@@ -1,0 +1,21 @@
+*Runtime: measure for different N and M -> get O(...)
+
+w.r.t. M:
+64: cost 789.844, time 793.183
+72: cost 778.49, time 877.187
+128: cost 738.634, time 1171.6
+
+
+*Eigensystem of D or D': meaning?
+a.) Kernels with and without meaningful ES
+b.) Model systems
+c.) t, t' -> t_ne, t_se. <C(t_se)>_t_ne
+
+*Recurrence: N=(100,1000,10000), d=2,3
+*Perturbation theory and linear response: theoretical basics
+*Additional work
+
+
+
+*New Job / Data
+*Install into home directory liggghts and CFDCoupling

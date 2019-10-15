@@ -1,0 +1,621 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     23129,        613]
+NotebookOptionsPosition[     22332,        594]
+NotebookOutlinePosition[     22696,        610]
+CellTagsIndexPosition[     22653,        607]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"RescaledDistancematrix", "[", "distancematrix_", "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"min", ",", "max", ",", "delta", ",", "list", ",", "res"}], 
+      "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"list", "=", 
+       RowBox[{"Flatten", "[", "distancematrix", "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"min", "=", 
+       RowBox[{"Min", "[", "list", "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"max", "=", 
+       RowBox[{"Max", "[", "list", "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"delta", "=", 
+       RowBox[{"max", "-", "min"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"distancematrix", "-", "min"}], ")"}], "/", "delta"}]}], ";",
+       "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.77052674912431*^9, 3.7705268116738367`*^9}, {
+  3.770610016758404*^9, 3.770610098581685*^9}},
+ CellLabel->"In[16]:=",ExpressionUUID->"459849e3-7484-41e9-89c0-46919921a6f2"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"RecurrenceMatrix", "[", 
+    RowBox[{"distancematrix_", ",", 
+     RowBox[{"\[Epsilon]_", "/;", 
+      RowBox[{"0", "<", "\[Epsilon]", "<", "1"}]}], ",", 
+     RowBox[{"scale_", "/;", "scale"}]}], "]"}], ":=", 
+   RowBox[{"Map", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"HeavisideTheta", "[", 
+       RowBox[{"#", "-", "\[Epsilon]"}], "]"}], "&"}], ",", 
+     RowBox[{"RescaledDistancematrix", "@", "distancematrix"}], ",", 
+     RowBox[{"{", "2", "}"}]}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"RecurrenceMatrix", "[", 
+    RowBox[{"distancematrix_", ",", 
+     RowBox[{"\[Epsilon]_", "/;", 
+      RowBox[{"0", "<", "\[Epsilon]"}]}], ",", 
+     RowBox[{"scale_", "/;", 
+      RowBox[{"!", "scale"}]}]}], "]"}], ":=", 
+   RowBox[{"Map", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"HeavisideTheta", "[", 
+       RowBox[{"#", "-", "\[Epsilon]"}], "]"}], "&"}], ",", "distancematrix", 
+     ",", 
+     RowBox[{"{", "2", "}"}]}], "]"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.770526837186681*^9, 3.7705269346508627`*^9}, {
+   3.770527819918188*^9, 3.770527868354804*^9}, {3.770610530358081*^9, 
+   3.770610537679188*^9}, {3.770610624773024*^9, 3.770610625370748*^9}, {
+   3.770610656965292*^9, 3.770610711356504*^9}, 3.770610954662867*^9, {
+   3.77061099514944*^9, 3.770611040645093*^9}, {3.770611079253063*^9, 
+   3.770611090523678*^9}, {3.770611122309517*^9, 3.7706111224349937`*^9}},
+ CellLabel->"In[17]:=",ExpressionUUID->"251f0dd5-fdf7-4f5f-a0d2-37eba906da93"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"RR", "[", "recurrencematrix_", "]"}], ":=", 
+   RowBox[{"N", "[", 
+    RowBox[{
+     RowBox[{"Total", "[", 
+      RowBox[{"Flatten", "[", "recurrencematrix", "]"}], "]"}], "/", 
+     RowBox[{"(", 
+      RowBox[{"Times", "@@", 
+       RowBox[{"Dimensions", "@", "recurrencematrix"}]}], ")"}]}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.770526370636145*^9, 3.7705263950379267`*^9}, {
+  3.770526432765294*^9, 3.77052648290279*^9}, {3.7705265708129683`*^9, 
+  3.7705266015714083`*^9}, {3.770526638420265*^9, 3.770526724637519*^9}, {
+  3.770526965947456*^9, 3.770526987831586*^9}, {3.770611386810266*^9, 
+  3.7706114119435062`*^9}, {3.770611756278281*^9, 3.770611769898323*^9}, {
+  3.7706123310816393`*^9, 3.770612353150474*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"d435585e-9250-4b40-9230-9aa3b77a0644"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"DET", "[", 
+    RowBox[{"recurrencematrix_", ",", 
+     RowBox[{"lmin_Integer", "/;", 
+      RowBox[{"1", "<=", "lmin"}]}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"n", "=", 
+        RowBox[{"Length", "@", "recurrencematrix"}]}], ",", 
+       "sidediagonalslist", ",", "totallist", ",", "l", ",", "P", ",", 
+       "res"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"sidediagonalslist", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"recurrencematrix", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", ",", 
+            RowBox[{"i", "+", "d"}]}], "]"}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"d", ",", 
+           RowBox[{"n", "-", "1"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", 
+           RowBox[{"n", "-", "d"}]}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"totallist", "=", 
+       RowBox[{"Flatten", "[", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "[", "#", "]"}], "&"}], ",", 
+          RowBox[{"Map", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Split", "[", "#", "]"}], "&"}], ",", 
+            "sidediagonalslist"}], "]"}], ",", 
+          RowBox[{"{", "2", "}"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"l", ",", "P"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"SortBy", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Normal", "[", 
+              RowBox[{"Counts", "[", "totallist", "]"}], "]"}], "/.", 
+             "\[VeryThinSpace]", 
+             RowBox[{"Rule", "\[Rule]", "List"}]}], ",", "First"}], "]"}], 
+          "[", 
+          RowBox[{"[", 
+           RowBox[{"2", ";;", "All"}], "]"}], "]"}], ")"}], 
+        "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{"N", "[", 
+        RowBox[{
+         RowBox[{"Total", "[", 
+          RowBox[{
+           RowBox[{"UnitStep", "[", 
+            RowBox[{"l", "-", "lmin"}], "]"}], "*", "l", "*", "P"}], "]"}], 
+         "/", 
+         RowBox[{"Total", "[", 
+          RowBox[{"l", "*", "P"}], "]"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"DETFull", "[", "recurrencematrix_", "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"n", "=", 
+        RowBox[{"Length", "@", "recurrencematrix"}]}], ",", 
+       "sidediagonalslist", ",", "totallist", ",", "l", ",", "P", ",", 
+       "res"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"sidediagonalslist", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"recurrencematrix", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", ",", 
+            RowBox[{"i", "+", "d"}]}], "]"}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"d", ",", 
+           RowBox[{"n", "-", "1"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", 
+           RowBox[{"n", "-", "d"}]}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"totallist", "=", 
+       RowBox[{"Flatten", "[", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "[", "#", "]"}], "&"}], ",", 
+          RowBox[{"Map", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Split", "[", "#", "]"}], "&"}], ",", 
+            "sidediagonalslist"}], "]"}], ",", 
+          RowBox[{"{", "2", "}"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"l", ",", "P"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"SortBy", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Normal", "[", 
+              RowBox[{"Counts", "[", "totallist", "]"}], "]"}], "/.", 
+             "\[VeryThinSpace]", 
+             RowBox[{"Rule", "\[Rule]", "List"}]}], ",", "First"}], "]"}], 
+          "[", 
+          RowBox[{"[", 
+           RowBox[{"2", ";;", "All"}], "]"}], "]"}], ")"}], 
+        "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"lmin", ",", 
+           RowBox[{"N", "[", 
+            RowBox[{
+             RowBox[{"Total", "[", 
+              RowBox[{
+               RowBox[{"UnitStep", "[", 
+                RowBox[{"l", "-", "lmin"}], "]"}], "*", "l", "*", "P"}], 
+              "]"}], "/", 
+             RowBox[{"Total", "[", 
+              RowBox[{"l", "*", "P"}], "]"}]}], "]"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"lmin", ",", "1", ",", 
+           RowBox[{"l", "[", 
+            RowBox[{"[", 
+             RowBox[{"-", "1"}], "]"}], "]"}]}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.770527743853805*^9, 3.770527776002512*^9}, {
+   3.77052788270638*^9, 3.770527896522299*^9}, {3.7705486819739037`*^9, 
+   3.770548683975696*^9}, {3.770608948810605*^9, 3.7706089882901506`*^9}, {
+   3.770609245178207*^9, 3.77060925556218*^9}, {3.770609332965988*^9, 
+   3.770609345390829*^9}, {3.770609376869501*^9, 3.770609424188632*^9}, {
+   3.770609458087276*^9, 3.770609495380021*^9}, {3.770609528923724*^9, 
+   3.7706095676512012`*^9}, 3.770612739953507*^9, {3.770612826075733*^9, 
+   3.770612829913488*^9}, {3.770612864522215*^9, 3.770612981751412*^9}, {
+   3.773472097552712*^9, 3.773472109805718*^9}, {3.773472142318563*^9, 
+   3.773472143862472*^9}, {3.773472494641932*^9, 3.773472497193651*^9}},
+ CellLabel->"In[35]:=",ExpressionUUID->"71505041-4774-4b8b-9e80-4fe1e0d18b87"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"LAM", "[", 
+    RowBox[{"recurrencematrix_", ",", 
+     RowBox[{"vmin_Integer", "/;", 
+      RowBox[{"1", "\[LessEqual]", "vmin"}]}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"n", "=", 
+        RowBox[{"Length", "@", "recurrencematrix"}]}], ",", 
+       "verticallineslist", ",", "totallist", ",", "v", ",", "P", ",", 
+       "res"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"verticallineslist", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"recurrencematrix", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", ",", 
+            RowBox[{"1", ";;", 
+             RowBox[{"i", "-", "1"}]}]}], "]"}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", "2", ",", "n"}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"totallist", "=", 
+       RowBox[{"Flatten", "[", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "[", "#", "]"}], "&"}], ",", 
+          RowBox[{"Map", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Split", "[", "#", "]"}], "&"}], ",", 
+            "verticallineslist"}], "]"}], ",", 
+          RowBox[{"{", "2", "}"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"v", ",", "P"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"SortBy", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Normal", "[", 
+              RowBox[{"Counts", "[", "totallist", "]"}], "]"}], "/.", 
+             "\[VeryThinSpace]", 
+             RowBox[{"Rule", "\[Rule]", "List"}]}], ",", "First"}], "]"}], 
+          "[", 
+          RowBox[{"[", 
+           RowBox[{"2", ";;", "All"}], "]"}], "]"}], ")"}], 
+        "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{"N", "[", 
+        RowBox[{
+         RowBox[{"Total", "[", 
+          RowBox[{
+           RowBox[{"UnitStep", "[", 
+            RowBox[{"v", "-", "vmin"}], "]"}], "*", "v", "*", "P"}], "]"}], 
+         "/", 
+         RowBox[{"Total", "[", 
+          RowBox[{"v", "*", "P"}], "]"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"LAMFull", "[", 
+    RowBox[{"recurrencematrix_", ",", 
+     RowBox[{"vmin_Integer", "/;", 
+      RowBox[{"1", "\[LessEqual]", "vmin"}]}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"n", "=", 
+        RowBox[{"Length", "@", "recurrencematrix"}]}], ",", 
+       "verticallineslist", ",", "totallist", ",", "v", ",", "P", ",", 
+       "res"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"verticallineslist", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"recurrencematrix", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", ",", 
+            RowBox[{"1", ";;", 
+             RowBox[{"i", "-", "1"}]}]}], "]"}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", "2", ",", "n"}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"totallist", "=", 
+       RowBox[{"Flatten", "[", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "[", "#", "]"}], "&"}], ",", 
+          RowBox[{"Map", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Split", "[", "#", "]"}], "&"}], ",", 
+            "verticallineslist"}], "]"}], ",", 
+          RowBox[{"{", "2", "}"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"v", ",", "P"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"SortBy", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Normal", "[", 
+              RowBox[{"Counts", "[", "totallist", "]"}], "]"}], "/.", 
+             "\[VeryThinSpace]", 
+             RowBox[{"Rule", "\[Rule]", "List"}]}], ",", "First"}], "]"}], 
+          "[", 
+          RowBox[{"[", 
+           RowBox[{"2", ";;", "All"}], "]"}], "]"}], ")"}], 
+        "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"vmin", ",", 
+           RowBox[{"N", "[", 
+            RowBox[{
+             RowBox[{"Total", "[", 
+              RowBox[{
+               RowBox[{"UnitStep", "[", 
+                RowBox[{"v", "-", "vmin"}], "]"}], "*", "v", "*", "P"}], 
+              "]"}], "/", 
+             RowBox[{"Total", "[", 
+              RowBox[{"v", "*", "P"}], "]"}]}], "]"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"vmin", ",", "1", ",", 
+           RowBox[{"v", "[", 
+            RowBox[{"[", 
+             RowBox[{"-", "1"}], "]"}], "]"}]}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.770527743853805*^9, 3.770527776002512*^9}, {
+   3.77052788270638*^9, 3.770527896522299*^9}, {3.7705486819739037`*^9, 
+   3.770548683975696*^9}, {3.770608948810605*^9, 3.7706089882901506`*^9}, {
+   3.770609245178207*^9, 3.77060925556218*^9}, {3.770609332965988*^9, 
+   3.770609345390829*^9}, {3.770609376869501*^9, 3.770609424188632*^9}, {
+   3.770609458087276*^9, 3.770609495380021*^9}, {3.770609528923724*^9, 
+   3.7706095676512012`*^9}, 3.770612739953507*^9, {3.770612826075733*^9, 
+   3.770612829913488*^9}, {3.770612864522215*^9, 3.770612981751412*^9}, {
+   3.773470726380858*^9, 3.773470775561226*^9}, {3.773471495102992*^9, 
+   3.773471515902196*^9}, {3.7734715500965137`*^9, 3.773471551575177*^9}, {
+   3.773471583622323*^9, 3.773471593045595*^9}, {3.773471700291679*^9, 
+   3.773471746667572*^9}},ExpressionUUID->"4faa0426-02b9-4045-8f08-\
+59148af1540c"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"TT", "[", 
+    RowBox[{"recurrencematrix_", ",", 
+     RowBox[{"vmin_Integer", "/;", 
+      RowBox[{"1", "\[LessEqual]", "vmin"}]}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"n", "=", 
+        RowBox[{"Length", "@", "recurrencematrix"}]}], ",", 
+       "verticallineslist", ",", "totallist", ",", "v", ",", "P", ",", 
+       "res"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"verticallineslist", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"recurrencematrix", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", ",", 
+            RowBox[{"1", ";;", 
+             RowBox[{"i", "-", "1"}]}]}], "]"}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", "2", ",", "n"}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"totallist", "=", 
+       RowBox[{"Flatten", "[", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "[", "#", "]"}], "&"}], ",", 
+          RowBox[{"Map", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Split", "[", "#", "]"}], "&"}], ",", 
+            "verticallineslist"}], "]"}], ",", 
+          RowBox[{"{", "2", "}"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"v", ",", "P"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"SortBy", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Normal", "[", 
+              RowBox[{"Counts", "[", "totallist", "]"}], "]"}], "/.", 
+             "\[VeryThinSpace]", 
+             RowBox[{"Rule", "\[Rule]", "List"}]}], ",", "First"}], "]"}], 
+          "[", 
+          RowBox[{"[", 
+           RowBox[{"2", ";;", "All"}], "]"}], "]"}], ")"}], 
+        "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{"N", "[", 
+        RowBox[{
+         RowBox[{"Total", "[", 
+          RowBox[{
+           RowBox[{"UnitStep", "[", 
+            RowBox[{"v", "-", "vmin"}], "]"}], "*", "v", "*", "P"}], "]"}], 
+         "/", 
+         RowBox[{"Total", "[", 
+          RowBox[{
+           RowBox[{"UnitStep", "[", 
+            RowBox[{"v", "-", "vmin"}], "]"}], "*", "P"}], "]"}]}], "]"}]}], 
+      ";", "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"TTFull", "[", 
+    RowBox[{"recurrencematrix_", ",", 
+     RowBox[{"vmin_Integer", "/;", 
+      RowBox[{"1", "\[LessEqual]", "vmin"}]}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"n", "=", 
+        RowBox[{"Length", "@", "recurrencematrix"}]}], ",", 
+       "verticallineslist", ",", "totallist", ",", "v", ",", "P", ",", 
+       "res"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"verticallineslist", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"recurrencematrix", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", ",", 
+            RowBox[{"1", ";;", 
+             RowBox[{"i", "-", "1"}]}]}], "]"}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", "2", ",", "n"}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"totallist", "=", 
+       RowBox[{"Flatten", "[", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "[", "#", "]"}], "&"}], ",", 
+          RowBox[{"Map", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Split", "[", "#", "]"}], "&"}], ",", 
+            "verticallineslist"}], "]"}], ",", 
+          RowBox[{"{", "2", "}"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"v", ",", "P"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"SortBy", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Normal", "[", 
+              RowBox[{"Counts", "[", "totallist", "]"}], "]"}], "/.", 
+             "\[VeryThinSpace]", 
+             RowBox[{"Rule", "\[Rule]", "List"}]}], ",", "First"}], "]"}], 
+          "[", 
+          RowBox[{"[", 
+           RowBox[{"2", ";;", "All"}], "]"}], "]"}], ")"}], 
+        "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"res", "=", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"vmin", ",", 
+           RowBox[{"N", "[", 
+            RowBox[{
+             RowBox[{"Total", "[", 
+              RowBox[{
+               RowBox[{"UnitStep", "[", 
+                RowBox[{"v", "-", "vmin"}], "]"}], "*", "v", "*", "P"}], 
+              "]"}], "/", 
+             RowBox[{"Total", "[", 
+              RowBox[{
+               RowBox[{"UnitStep", "[", 
+                RowBox[{"v", "-", "vmin"}], "]"}], "*", "P"}], "]"}]}], 
+            "]"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"vmin", ",", "1", ",", 
+           RowBox[{"v", "[", 
+            RowBox[{"[", 
+             RowBox[{"-", "1"}], "]"}], "]"}]}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "res"}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.770527743853805*^9, 3.770527776002512*^9}, {
+   3.77052788270638*^9, 3.770527896522299*^9}, {3.7705486819739037`*^9, 
+   3.770548683975696*^9}, {3.770608948810605*^9, 3.7706089882901506`*^9}, {
+   3.770609245178207*^9, 3.77060925556218*^9}, {3.770609332965988*^9, 
+   3.770609345390829*^9}, {3.770609376869501*^9, 3.770609424188632*^9}, {
+   3.770609458087276*^9, 3.770609495380021*^9}, {3.770609528923724*^9, 
+   3.7706095676512012`*^9}, 3.770612739953507*^9, {3.770612826075733*^9, 
+   3.770612829913488*^9}, {3.770612864522215*^9, 3.770612981751412*^9}, {
+   3.773470726380858*^9, 3.773470775561226*^9}, {3.773471495102992*^9, 
+   3.773471515902196*^9}, {3.7734715500965137`*^9, 3.773471551575177*^9}, {
+   3.773471583622323*^9, 3.773471593045595*^9}, {3.773471700291679*^9, 
+   3.773471746667572*^9}, {3.773471822027089*^9, 3.7734718572282267`*^9}, 
+   3.773471895436514*^9},ExpressionUUID->"9ef02ba2-01a7-4cc3-933c-\
+8ceac005ea6c"]
+},
+WindowSize->{1625, 995},
+WindowMargins->{{Automatic, 0}, {0, Automatic}},
+Magnification:>1.25 Inherited,
+FrontEndVersion->"12.0 for Linux x86 (64-bit) (April 8, 2019)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 1149, 27, 243, "Input",ExpressionUUID->"459849e3-7484-41e9-89c0-46919921a6f2"],
+Cell[1710, 49, 1556, 36, 69, "Input",ExpressionUUID->"251f0dd5-fdf7-4f5f-a0d2-37eba906da93"],
+Cell[3269, 87, 859, 18, 39, "Input",ExpressionUUID->"d435585e-9250-4b40-9230-9aa3b77a0644"],
+Cell[4131, 107, 5970, 159, 417, "Input",ExpressionUUID->"71505041-4774-4b8b-9e80-4fe1e0d18b87"],
+Cell[10104, 268, 5984, 158, 417, "Input",ExpressionUUID->"4faa0426-02b9-4045-8f08-59148af1540c"],
+Cell[16091, 428, 6237, 164, 417, "Input",ExpressionUUID->"9ef02ba2-01a7-4cc3-933c-8ceac005ea6c"]
+}
+]
+*)
+

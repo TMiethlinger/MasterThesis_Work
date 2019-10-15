@@ -1,0 +1,20 @@
+Notes - Meeting 02.08
+
+1.) Simulation Fluidized Bed
+Works again since Wednesday
+Started two cases; inlet velocity
+Zipf's law paper: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6052064/
+
+2.) MD LJ
+    R: Presented; only visual
+(R,V): Presented; Knick
+    V: Today; only visual, distinctive vertical lines; FT
+Turb, V
+
+Poincere Zeit, "Return"-Zeit
+
+3.) ChaSe Eigensolver, HPX Model -> Theoretikum?
+
+4.) Paper 2D Turb
+
+5.) Non-equilibrium induced by non-ergodicity
