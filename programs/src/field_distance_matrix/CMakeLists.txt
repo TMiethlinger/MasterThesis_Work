@@ -18,5 +18,5 @@ include_directories(${MPI_INCLUDE_PATH})
 SET(CMAKE_CXX_FLAGS  "-std=c++17 -Wall -O3")
 SET(CMAKE_EXE_LINKER_FLAGS  "-lboost_program_options")
 
-add_executable(field_distance_matrix field_distance_matrix.cpp ../particle_io/particle_io.hpp)
+add_executable(field_distance_matrix field_distance_matrix.cpp ../../includes/general_util.hpp ../../includes/io_util.hpp)
 target_link_libraries(field_distance_matrix PUBLIC ${MPI_CXX_LIBRARIES} PUBLIC ${Boost_LIBRARIES})

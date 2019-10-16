@@ -1,33 +1,36 @@
-// MPI
-#include <mpi.h>
+// Author:     Thomas Miethlinger B.Sc.
+// Date:       16.10.2019
+// Email:      t.miethlinger@protonmail.com
+// University: Johannes Kepler University Linz, Austria
 
 // STL
 #include <iostream>
 #include <string>
-
-// Math, Algorithm and Datastructures
 #include <cmath> // sqrt
 #include <algorithm> // std::fill
 #include <array>
 #include <vector>
+//#include <cctype>
+//#include <cstdlib>
+//#include <unistd.h>
 
-// Argument parsing
-#include <cctype>
-#include <cstdlib>
-#include <unistd.h>
+// MPI
+#include <mpi.h>
 
 // Boost
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
 // Internal classes
-#include "../particle_io/particle_io.hpp"
+#include "../../includes/io_util.hpp"
+#include "../../includes/general_util.hpp"
 
 using std::size_t;
 using std::string;
 using std::array;
 using std::vector;
 using namespace boost::program_options;
+
 typedef vector<int> VI;
 typedef vector<double> VD;
 typedef vector<VD> VVD;
@@ -63,11 +66,9 @@ size_t nz;
 double dz; // 0.00625
 
 // Calculation
-int GetTotalBinNumber(double min, double max, double d);
-int GetIndexFromCoordinate(double x, double min, double d);
-void CalcCountGrid(VI& countgrid, VVD& R);
-double L2Metric(VI& count_grid_a, VI& count_grid_b);
-void PrintCountGrid(VD& countgrid);
+int get_index_from_coordinate(double x, double min, double d);
+void calc_count_grid(VI& countgrid, VVD& R);
+double L2_metric(VI& count_grid_a, VI& count_grid_b);
 
 // IO
 string inputfolder_parent = "/home/k3501/k354524/master_thesis_work/data/";
@@ -76,9 +77,6 @@ string inputfilenamepart;
 string outputfolder_parent = "/home/k3501/k354524/master_thesis_work/results/field_distance_matrix/";
 string outputfolder_relative; // e.g. Liggghts/.../
 string outputfilename = "field_distance_matrix.txt";
-
-// Jobs
-vector<AI2> CreateJobsVector(int world_rank, int world_size);
 
 int main(int argc, char * argv[])
 {
@@ -126,12 +124,21 @@ int main(int argc, char * argv[])
     if(world_rank == 0)
     {
         string outputfolder = outputfolder_parent + outputfolder_relative;
-        IO::CreateWorkingDirectory(outputfolder.c_str());
+        io_util::create_working_directory(outputfolder.c_str());
     }
 
-    // Get all jobs, i.e. pairs of {i_1, i_2} for which the distance d_{i_1,i_2} is to be calculated
-    vector<AI2> jobs_vector = CreateJobsVector(world_rank, world_size);
-    size_t njobs_my_rank = jobs_vector.size();
+    // Get all jobs, i.e. int i which produce a pair of {i_1, i_2} for which the distance d_{i_1,i_2} is to be calculated
+    VI jobs_vector_my_rank = general_util::create_jobs_vector(njobs, world_rank, world_size);
+    size_t njobs_my_rank = jobs_vector_my_rank.size();
+    // Define a vector which transforms from i to {i_1, i_2}
+    vector<AI2> total_jobs_vector(njobs);
+    for(int i1 = 0, i = 0; i1 < nsteps - 1; i1++)
+    {
+        for(int i2 = i1 + 1; i2 < nsteps; i2++, i++)
+        {
+            total_jobs_vector[i] = {i1, i2};
+        }
+    }
     // For each rank and its jobs, save the result of the computation into field_distance_results
     VD field_distance_results(njobs_my_rank, 0);
 
@@ -149,7 +156,7 @@ int main(int argc, char * argv[])
     std::array<int, 2> job_index_arr;
     for(size_t i = 0; i != njobs_my_rank; i++)
     {
-        job_index_arr = jobs_vector[i];
+        job_index_arr = total_jobs_vector[jobs_vector_my_rank[i]];
 
         // Files may be saved per time-step with an offset imin and scaling istep.
         i1 = job_index_arr[0] * istep + imin;
@@ -159,23 +166,23 @@ int main(int argc, char * argv[])
             // Reset count_grid_a
             std::fill(count_grid_a.begin(), count_grid_a.end(), 0);
             // Read input dump file
-            if (!IO::ReadPositions3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(i1), N, Ra))
+            if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(i1), N, Ra))
                 return 1;
             // Bin particles
-            CalcCountGrid(count_grid_a, Ra);
+            calc_count_grid(count_grid_a, Ra);
         }
 
         i2 = job_index_arr[1] * istep + imin;
         if(i2 != i2_prev)
         {
             std::fill(count_grid_b.begin(), count_grid_b.end(), 0);
-            if (!IO::ReadPositions3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(i2), N, Rb))
+            if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(i2), N, Rb))
                 return 1;
-            CalcCountGrid(count_grid_b, Rb);
+            calc_count_grid(count_grid_b, Rb);
         }
 
         // Compute L_2 metric
-        field_distance_results[i] = L2Metric(count_grid_a, count_grid_b);
+        field_distance_results[i] = L2_metric(count_grid_a, count_grid_b);
         i1_prev = i1;
         i2_prev = i2;
     }
@@ -221,7 +228,7 @@ int main(int argc, char * argv[])
         }
 
         // Write the computed distance matrix based on fields into this filepathname
-        IO::WriteMatrixResult(outputfolder_parent + outputfolder_relative + outputfilename, field_distance_matrix);
+        io_util::write_matrix_result(outputfolder_parent + outputfolder_relative + outputfilename, field_distance_matrix);
     }
     // Each other rank sends their intermediate results to rank 0
     else
@@ -235,31 +242,25 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-// Compute the number of bins per coordinate using the bin with d
-// int GetTotalBinNumber(double min, double max, double d)
-// {
-//     return static_cast<int>((max - min)/d + precision);
-// }
-
 // Compute the bin index of coordinate x based on min. coordinate x and bin width d
-int GetIndexFromCoordinate(double x, double min, double d)
+int get_index_from_coordinate(double x, double min, double d)
 {
     return static_cast<int>(std::floor((x - min)/d));
 }
 
-void CalcCountGrid(VI& countgrid, VVD& R)
+void calc_count_grid(VI& countgrid, VVD& R)
 {
     int ix, iy, iz;
     for(int i = 0; i < N; i++)
     {
-        ix = GetIndexFromCoordinate(R[i][0], xmin, dx);
-        iy = GetIndexFromCoordinate(R[i][1], ymin, dy);
-        iz = GetIndexFromCoordinate(R[i][2], zmin, dz);
+        ix = get_index_from_coordinate(R[i][0], xmin, dx);
+        iy = get_index_from_coordinate(R[i][1], ymin, dy);
+        iz = get_index_from_coordinate(R[i][2], zmin, dz);
         countgrid[(iz * ny + iy) * nx + ix]++;
     }
 }
 
-double L2Metric(VI& count_grid_a, VI& count_grid_b)
+double L2_metric(VI& count_grid_a, VI& count_grid_b)
 {
     double sum = 0.0;
 
@@ -279,25 +280,8 @@ double L2Metric(VI& count_grid_a, VI& count_grid_b)
     return sqrt(sum);
 }
 
-// Prints a 3D object
-void PrintCountGrid(VD& countgrid)
-{
-    for(size_t iz = 0, i = 0; iz < nz; iz++)
-    {
-        for(size_t iy = 0; iy < ny; iy++)
-        {
-            for(size_t ix = 0; ix < nx; ix++, i++)
-            {
-                std::cout << countgrid[i] << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-}
-
 // Determine the jobs per rank
-vector<AI2> CreateJobsVector(int world_rank, int world_size)
+/*vector<AI2> CreateJobsVector(int world_rank, int world_size)
 {
     vector<AI2> job_vector;
     int njobs_per_rank_min = njobs / world_size;
@@ -331,4 +315,4 @@ vector<AI2> CreateJobsVector(int world_rank, int world_size)
     }
 
     return job_vector;
-}
+}*/
