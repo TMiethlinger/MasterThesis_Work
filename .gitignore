@@ -39,6 +39,9 @@
 *.out
 *.app
 
+### Data ###
+data
+
 ### Results ###
-*.png
-*.pdf
+#*.png
+#*.pdf
