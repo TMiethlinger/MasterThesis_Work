@@ -33,7 +33,12 @@ namespace io_util
     {
         bool result = true;
 
-        matrix.resize(row_ctr, std::vector<double>(col_ctr, 0));
+        if((std::size_t)row_ctr != matrix.size() || (std::size_t)col_ctr != matrix[0].size())
+        {
+            std::cout << "Error: Matrix dimensions do not fit! " << row_ctr << " " << matrix.size() << ", " << col_ctr << " " << matrix[0].size() << std::endl;
+            return false;
+        }
+
         std::vector<double> row(col_ctr);
 
         std::ifstream filestream;
@@ -52,6 +57,45 @@ namespace io_util
                         row[j] = std::stod(parts[j + col_min]);
                     }
                     matrix[i2] = row;
+                    i2++;
+                }
+            }
+            filestream.close();
+        }
+        else
+        {
+            std::cout << "Error: Could not read file " << filepathname << "!" << std::endl;
+            result = false;
+        }
+
+        return result;
+    }
+
+    bool read_double_matrix_row_major(std::string filepathname, std::vector<double> &matrix, std::string del, int row_min, int row_ctr, int col_min, int col_ctr)
+    {
+        bool result = true;
+
+        if((std::size_t)(row_ctr * col_ctr) != matrix.size())
+        {
+            std::cout << "Error: Matrix dimensions do not fit! " << (row_ctr * col_ctr) << " " << matrix.size() << std::endl;
+            return false;
+        }
+
+        std::ifstream filestream;
+        filestream.open(filepathname);
+        if (filestream.is_open())
+        {
+            std::string line;
+            std::vector<std::string> parts;
+            for (int i1 = 0, i2 = 0, i3 = 0; std::getline(filestream, line) && i2 < row_ctr; i1++)
+            {
+                if (row_min <= i1)
+                {
+                    boost::split(parts, line, boost::is_any_of(del));
+                    for (int j = 0; j < col_ctr; j++, i3++)
+                    {
+                        matrix[i3] = std::stod(parts[j + col_min]);
+                    }
                     i2++;
                 }
             }

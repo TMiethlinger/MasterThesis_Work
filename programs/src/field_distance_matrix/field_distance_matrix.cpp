@@ -10,9 +10,6 @@
 #include <algorithm> // std::fill
 #include <array>
 #include <vector>
-//#include <cctype>
-//#include <cstdlib>
-//#include <unistd.h>
 
 // MPI
 #include <mpi.h>
@@ -35,10 +32,6 @@ typedef vector<int> VI;
 typedef vector<double> VD;
 typedef vector<VD> VVD;
 typedef array<int, 2> AI2;
-
-// General constants
-const double precision = 0.000000000001;
-const int digits = 3;
 
 // Variables for the processing of the input dataset
 // They are set by the programm arguments argv
@@ -68,7 +61,7 @@ double dz; // 0.00625
 // Calculation
 int get_index_from_coordinate(double x, double min, double d);
 void calc_count_grid(VI& countgrid, VVD& R);
-double L2_metric(VI& count_grid_a, VI& count_grid_b);
+double L2_distance(VI& count_grid_a, VI& count_grid_b);
 
 // IO
 string inputfolder_parent = "/home/k3501/k354524/master_thesis_work/data/";
@@ -130,7 +123,7 @@ int main(int argc, char * argv[])
     // Get all jobs, i.e. int i which produce a pair of {i_1, i_2} for which the distance d_{i_1,i_2} is to be calculated
     VI jobs_vector_my_rank = general_util::create_jobs_vector(njobs, world_rank, world_size);
     size_t njobs_my_rank = jobs_vector_my_rank.size();
-    // Define a vector which transforms from i to {i_1, i_2}
+    // Define a vector total_jobs_vector which transforms from i to {i_1, i_2} for all jobs i
     vector<AI2> total_jobs_vector(njobs);
     for(int i1 = 0, i = 0; i1 < nsteps - 1; i1++)
     {
@@ -160,7 +153,7 @@ int main(int argc, char * argv[])
 
         // Files may be saved per time-step with an offset imin and scaling istep.
         i1 = job_index_arr[0] * istep + imin;
-        // In order to avoid two-times reading of the same file
+        // In order to avoid two-times reading from the same file
         if(i1 != i1_prev)
         {
             // Reset count_grid_a
@@ -172,6 +165,7 @@ int main(int argc, char * argv[])
             calc_count_grid(count_grid_a, Ra);
         }
 
+        // Same for state b
         i2 = job_index_arr[1] * istep + imin;
         if(i2 != i2_prev)
         {
@@ -182,7 +176,9 @@ int main(int argc, char * argv[])
         }
 
         // Compute L_2 metric
-        field_distance_results[i] = L2_metric(count_grid_a, count_grid_b);
+        field_distance_results[i] = L2_distance(count_grid_a, count_grid_b);
+
+        // Update indices
         i1_prev = i1;
         i2_prev = i2;
     }
@@ -248,6 +244,7 @@ int get_index_from_coordinate(double x, double min, double d)
     return static_cast<int>(std::floor((x - min)/d));
 }
 
+// Bin Particles
 void calc_count_grid(VI& countgrid, VVD& R)
 {
     int ix, iy, iz;
@@ -260,7 +257,8 @@ void calc_count_grid(VI& countgrid, VVD& R)
     }
 }
 
-double L2_metric(VI& count_grid_a, VI& count_grid_b)
+// Function to compute L2 distance
+double L2_distance(VI& count_grid_a, VI& count_grid_b)
 {
     double sum = 0.0;
 
