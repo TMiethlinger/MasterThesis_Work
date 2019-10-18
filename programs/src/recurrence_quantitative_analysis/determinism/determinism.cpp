@@ -128,14 +128,14 @@ int main(int argc, char * argv[])
         MPI_Recv(norm_distance_matrix.data(), n2, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
-    // Get all jobs i, i.e. compute the recurrence rate w.r.t. eps(i) = i * deps
+    // Get all jobs i which correspond to eps_i = i * deps
     VI jobs_vector = general_util::create_jobs_vector(njobs, world_rank, world_size);
     size_t njobs_my_rank = jobs_vector.size();
 
     // For each rank and its jobs, save the result of the computation into determinism_results
     VVD determinism_results(njobs_my_rank);
 
-    // Compute the all recurrence rates based on jobs_vector
+    // Compute the all results based on jobs_vector for each rank
     double eps;
     VD det_vector;
     for(size_t i = 0; i != njobs_my_rank; i++)
@@ -147,14 +147,14 @@ int main(int argc, char * argv[])
     }
 
     // Write the intermediate determinism 
-    // io_util::write_matrix_result(outputfolder_parent + outputfolder_relative + "recurrence_rate_" + std::to_string(world_rank) + ".txt", determinism_results);
+    // io_util::write_matrix_result(outputfolder_parent + outputfolder_relative + "result_" + std::to_string(world_rank) + ".txt", determinism_results);
 
     // Rank 0 needs to compose the determinism_results
     if(world_rank == 0)
     {
-        // Save all recurrence rates from each rank into the following vector
+        // Save results from each rank into the following vector
         VVD total_determinism_results(njobs, VD(n, 0.0));
-        //Calculate how the full problem (computing the recurrence rates w.r.t. eps) was split up into jobs
+        //Calculate how the full problem was split up into jobs
         int njobs_per_rank_min = njobs / world_size;
         int njobs_per_rank_max = njobs % world_size == 0 ? njobs_per_rank_min : njobs_per_rank_min + 1;
         int min_rank = njobs % world_size;
@@ -188,7 +188,7 @@ int main(int argc, char * argv[])
             }
         }
 
-        // Write the computed recurrence rates into this filepathname
+        // Write the computed determinism vector rates into this filepathname
         io_util::write_matrix_result(outputfolder_parent + outputfolder_relative + outputfilename, output_result_matrix);
     }
     // Each other rank sends their intermediate results to rank 0
