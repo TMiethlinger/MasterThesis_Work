@@ -52,8 +52,10 @@ namespace rqa_core
         // Smallest possible diagonal line size = 1
         // Largest possible diagonal line size = n -> vector.size == n
         std::vector<int> hist_diagonal_lines(n, 0);
+        // There is always a recurrence in the main diagonal
+        hist_diagonal_lines[n - 1] = 1;
 
-        // Iterate through the recurrence_matrix in an diagonal manner
+        // Iterate through the half of the recurrence_matrix in an diagonal manner (without main diagonal)
         std::size_t row;
         std::size_t col;
         bool found_diag;
@@ -66,7 +68,7 @@ namespace rqa_core
             {
                 row = n - i + j - 1;
                 col = j;
-                
+
                 // Find diagonal lines and save them in the vector hist_diagonal_lines
                 if(recurrence_matrix[row * n + col] == 1 && !found_diag)
                 {
@@ -80,7 +82,8 @@ namespace rqa_core
                 else if(recurrence_matrix[row * n + col] == 0 && found_diag)
                 {
                     found_diag = false;
-                    hist_diagonal_lines[ctr_diag_size - 1]++;
+                    // There are always two diagonal lines; top and bottom of diagonal lines
+                    hist_diagonal_lines[ctr_diag_size - 1] += 2;
                     max_diag_size = max_diag_size < ctr_diag_size ? ctr_diag_size : max_diag_size;
                 }
                 // else: recurrence_matrix[row * n + col] == 0 && found_diag -> nothing to do
