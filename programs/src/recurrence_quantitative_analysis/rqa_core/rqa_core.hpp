@@ -60,7 +60,6 @@ namespace rqa_core
         std::size_t col;
         bool found_diag;
         int ctr_diag_size;
-        int max_diag_size = -1;
         for(int i = 0; i < n; i++)
         {
             found_diag = false;
@@ -84,7 +83,6 @@ namespace rqa_core
                     found_diag = false;
                     // There are always two diagonal lines; top and bottom of diagonal lines
                     hist_diagonal_lines[ctr_diag_size - 1] += 2;
-                    max_diag_size = max_diag_size < ctr_diag_size ? ctr_diag_size : max_diag_size;
                 }
                 // else: recurrence_matrix[row * n + col] == 0 && found_diag -> nothing to do
             }
@@ -114,5 +112,78 @@ namespace rqa_core
         }
 
         return det_vector;
+    }
+
+    // Calculate the laminarity vector for a given recurrence matrix
+    std::vector<double> laminarity(std::vector<int> &recurrence_matrix)
+    {
+        // laminarity vector is of size n due to possible min and max
+        // sizes of vertical lines l
+        int n2 = (int)recurrence_matrix.size();
+        int n = sqrt(n2);
+        std::vector<double> lam_vector(n, 0);
+
+        // Create vector which represents histogram of lengths of vertical(and, by mirroring, horizontal) lines of size n:
+        // Smallest possible vertical line size = 1
+        // Largest possible vertical line size = n -> vector.size == n
+        std::vector<int> hist_vertical_lines(n, 0);
+
+        // Iterate through the half of the recurrence_matrix in an vertical manner (without main vertical)
+        std::size_t row;
+        std::size_t col;
+        bool found_vert;
+        int ctr_vert_size;
+        for(int i = 0; i < n; i++)
+        {
+            found_vert = false;
+            for(int j = 0; j < i + 1; j++)
+            {
+                row = i - j;
+                col = i;
+
+                // Find vertical lines and save them in the vector hist_vertical_lines
+                if(recurrence_matrix[row * n + col] == 1 && !found_vert)
+                {
+                    found_vert = true;
+                    ctr_vert_size = 1;
+                }
+                else if(recurrence_matrix[row * n + col] == 1 && found_vert)
+                {
+                    ctr_vert_size++;
+                }
+                else if(recurrence_matrix[row * n + col] == 0 && found_vert)
+                {
+                    found_vert = false;
+                    // There are always two vertical lines; top and bottom of vertical lines
+                    hist_vertical_lines[ctr_vert_size - 1] += 2;
+                }
+                // else: recurrence_matrix[row * n + col] == 0 && found_vert -> nothing to do
+            }
+        }
+
+        // Compute the laminarity vector
+
+        // Denominator is independent of lmin
+        double denom = 0.0;
+        for(int l = 1; l <= n; l++)
+        {
+            // Histogram of vertical line of length l is stored
+            // in hist_vertical_lines at index l - 1
+            denom += l * hist_vertical_lines[l - 1];
+        }
+
+        // Numerator is dependent of lmin
+        double num;
+        for(int lmin = 1; lmin <= n; lmin++)
+        {
+            num = 0.0;
+            for(int l = lmin; l <= n; l++)
+            {
+                num += l * hist_vertical_lines[l - 1];
+            }
+            lam_vector[lmin - 1] = num / denom;
+        }
+
+        return lam_vector;
     }
 };

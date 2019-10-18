@@ -1,0 +1,1 @@
+/apps/gcc-7.2.0/bin/g++   -std=c++17 -Wall -O3  -lboost_program_options CMakeFiles/laminarity.dir/laminarity.cpp.o  -o laminarity  -L/home/k3501/k354524/apps/boost_1_71_0/stage/lib -rdynamic -lmpicxx -lmpi /home/k3501/k354524/apps/boost_1_71_0/stage/lib/libboost_program_options.so -Wl,-rpath,/home/k3501/k354524/apps/boost_1_71_0/stage/lib 

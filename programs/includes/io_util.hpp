@@ -29,6 +29,20 @@ namespace io_util
             std::cerr << "Error: " << strerror(errno) << std::endl; 
     }
 
+    template <class T>
+    void print_matrix_row_major_mode(std::vector<T> &matrix, int m, int n)
+    {
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                std::cout << matrix[i * n + j] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
     bool read_double_matrix(std::string filepathname, std::vector<std::vector<double>> &matrix, std::string del, int row_min, int row_ctr, int col_min, int col_ctr)
     {
         bool result = true;
