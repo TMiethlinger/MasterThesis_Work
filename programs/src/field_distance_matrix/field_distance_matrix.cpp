@@ -36,9 +36,9 @@ typedef array<int, 2> AI2;
 // Variables for the processing of the input dataset
 // They are set by the programm arguments argv
 int N; // number of particles
-int imin;
-int imax;
-int istep;
+int tmin;
+int tmax;
+int tstep;
 int nsteps;
 int njobs;
 
@@ -86,9 +86,9 @@ int main(int argc, char * argv[])
     options_description desc_commandline;
     desc_commandline.add_options()
     ("N", value<int>()->default_value(1), "Particle number N")
-    ("imin", value<int>()->default_value(0), "First time index")
-    ("imax", value<int>()->default_value(1), "Last time index")
-    ("istep", value<int>()->default_value(1), "Time index step size")
+    ("tmin", value<int>()->default_value(0), "First time index")
+    ("tmax", value<int>()->default_value(1), "Last time index")
+    ("tstep", value<int>()->default_value(1), "Time index step size")
     ("nx", value<size_t>()->default_value(1), "Number of bins in x-direction")
     ("ny", value<size_t>()->default_value(1), "Number of bins in y-direction")
     ("nz", value<size_t>()->default_value(1), "Number of bins in z-direction")
@@ -98,10 +98,10 @@ int main(int argc, char * argv[])
     variables_map vm;
     store(parse_command_line(argc, argv, desc_commandline), vm);
     N = vm["N"].as<int>();
-    imin = vm["imin"].as<int>();
-    imax = vm["imax"].as<int>();
-    istep = vm["istep"].as<int>();
-    nsteps = (imax - imin) / istep + 1;
+    tmin = vm["tmin"].as<int>();
+    tmax = vm["tmax"].as<int>();
+    tstep = vm["tstep"].as<int>();
+    nsteps = (tmax - tmin) / tstep + 1;
     njobs = (nsteps*nsteps - nsteps)/2;
     nx = vm["nx"].as<size_t>();
     dx = (xmax - xmin) / nx;
@@ -123,15 +123,17 @@ int main(int argc, char * argv[])
     // Get all jobs, i.e. int i which produce a pair of {i_1, i_2} for which the distance d_{i_1,i_2} is to be calculated
     VI jobs_vector_my_rank = general_util::create_jobs_vector(njobs, world_rank, world_size);
     size_t njobs_my_rank = jobs_vector_my_rank.size();
-    // Define a vector total_jobs_vector which transforms from i to {i_1, i_2} for all jobs i
+    // Define a vector total_jobs_vector which transforms from i to {t_1, t_2} for all jobs i
     vector<AI2> total_jobs_vector(njobs);
-    for(int i1 = 0, i = 0; i1 < nsteps - 1; i1++)
+
+    for(int t1 = tmin, i = 0; t1 <= (tmax - tstep); t1 += tstep)
     {
-        for(int i2 = i1 + 1; i2 < nsteps; i2++, i++)
+        for(int t2 = t1 + tstep; t2 <= tmax; t2 += tstep, i++)
         {
-            total_jobs_vector[i] = {i1, i2};
+            total_jobs_vector[i] = {t1, t2};
         }
     }
+
     // For each rank and its jobs, save the result of the computation into field_distance_results
     VD field_distance_results(njobs_my_rank, 0);
 
@@ -144,33 +146,34 @@ int main(int argc, char * argv[])
     VVD Rb(N, VD(3, 0));
 
     // Variables for the indices of each job
-    int i1, i2, i1_prev, i2_prev;
-    i1 = i2 = i1_prev = i2_prev = -1;
+    int t1, t2, t1_prev, t2_prev;
+    t1 = t2 = t1_prev = t2_prev = -1;
     std::array<int, 2> job_index_arr;
+
     for(size_t i = 0; i != njobs_my_rank; i++)
     {
         job_index_arr = total_jobs_vector[jobs_vector_my_rank[i]];
 
-        // Files may be saved per time-step with an offset imin and scaling istep.
-        i1 = job_index_arr[0] * istep + imin;
+        // Files may be saved per time-step with an offset tmin and scaling tstep.
+        t1 = job_index_arr[0];
         // In order to avoid two-times reading from the same file
-        if(i1 != i1_prev)
+        if(t1 != t1_prev)
         {
             // Reset count_grid_a
             std::fill(count_grid_a.begin(), count_grid_a.end(), 0);
             // Read input dump file
-            if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(i1), N, Ra))
+            if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(t1), N, Ra))
                 return 1;
             // Bin particles
             calc_count_grid(count_grid_a, Ra);
         }
 
         // Same for state b
-        i2 = job_index_arr[1] * istep + imin;
-        if(i2 != i2_prev)
+        t2 = job_index_arr[1];
+        if(t2 != t2_prev)
         {
             std::fill(count_grid_b.begin(), count_grid_b.end(), 0);
-            if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(i2), N, Rb))
+            if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(t2), N, Rb))
                 return 1;
             calc_count_grid(count_grid_b, Rb);
         }
@@ -179,8 +182,8 @@ int main(int argc, char * argv[])
         field_distance_results[i] = L2_distance(count_grid_a, count_grid_b);
 
         // Update indices
-        i1_prev = i1;
-        i2_prev = i2;
+        t1_prev = t1;
+        t2_prev = t2;
     }
 
     // Write the intermediate distance results 
