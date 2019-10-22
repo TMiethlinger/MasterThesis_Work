@@ -1,0 +1,9 @@
+[r3i3n2:mpi_rank_1][error_sighandler] Caught error: Segmentation fault (signal 11)
+[r3i3n2:mpi_rank_2][error_sighandler] Caught error: Segmentation fault (signal 11)
+[r3i3n2:mpi_rank_0][error_sighandler] Caught error: Segmentation fault (signal 11)
+[proxy:0:3@r3i0n12] [proxy:0:6@r3i0n9] HYD_pmcd_pmip_control_cmd_cb (pm/pmiserv/pmip_cb.c:909): assert (!closed) failed
+[proxy:0:6@r3i0n9] HYDT_dmxu_poll_wait_for_event (tools/demux/demux_poll.c:76): callback returned error status
+[proxy:0:6@r3i0n9] main (pm/pmiserv/pmip.c:20HYD_pmcd_pmip_control_cmd_cb (pm/pmiserv/pmip_cb.c:909): assert (!closed) failed
+[proxy:0:3@r3i0n12] HYDT_dmxu_poll_wait_for_event (tools/demux/demux_poll.c:76): callback returned error status
+[proxy:0:3@r3i0n12] main (pm/pmiserv/pmip.c:206): demux engine 6): demux engine error waiting for event
+error waiting for event
