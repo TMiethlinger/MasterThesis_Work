@@ -163,7 +163,10 @@ int main(int argc, char * argv[])
             std::fill(count_grid_a.begin(), count_grid_a.end(), 0);
             // Read input dump file
             if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(t1), N, Ra))
+            {
+                std::cout << "Error: Could not read file " << (inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(t1)) << "!" << std::endl;
                 return 1;
+            }
             // Bin particles
             calc_count_grid(count_grid_a, Ra);
         }
@@ -174,7 +177,10 @@ int main(int argc, char * argv[])
         {
             std::fill(count_grid_b.begin(), count_grid_b.end(), 0);
             if (!io_util::read_positions_3D(inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(t2), N, Rb))
+            {
+                std::cout << "Error: Could not read file " << (inputfolder_parent + inputfolder_relative + inputfilenamepart + std::to_string(t1)) << "!" << std::endl;
                 return 1;
+            }
             calc_count_grid(count_grid_b, Rb);
         }
 
@@ -250,13 +256,21 @@ int get_index_from_coordinate(double x, double min, double d)
 // Bin Particles
 void calc_count_grid(VI& countgrid, VVD& R)
 {
-    int ix, iy, iz;
+    int ix, iy, iz, itotal;
     for(int i = 0; i < N; i++)
     {
         ix = get_index_from_coordinate(R[i][0], xmin, dx);
         iy = get_index_from_coordinate(R[i][1], ymin, dy);
         iz = get_index_from_coordinate(R[i][2], zmin, dz);
-        countgrid[(iz * ny + iy) * nx + ix]++;
+        itotal = (iz * ny + iy) * nx + ix;
+        if(0 <= itotal && itotal < (int)countgrid.size())
+        {
+            countgrid[itotal]++;
+        }
+        else
+        {
+            std::cout << "Wrong index: " << itotal << std::endl;
+        }
     }
 }
 

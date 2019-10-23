@@ -39,8 +39,9 @@
 *.out
 *.app
 
-### Data ###
+### Folders ###
 data
+literature
 
 ### Results ###
 #*.png
