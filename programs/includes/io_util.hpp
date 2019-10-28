@@ -43,6 +43,20 @@ namespace io_util
         std::cout << std::endl;
     }
 
+    template <class T>
+    void print_matrix(std::vector<std::vector<T>> &matrix)
+    {
+        for(std::size_t i = 0; i < matrix.size(); i++)
+        {
+            for(std::size_t j = 0; j < matrix[i].size(); j++)
+            {
+                std::cout << matrix[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
     bool read_double_matrix(std::string filepathname, std::vector<std::vector<double>> &matrix, std::string del, int row_min, int row_ctr, int col_min, int col_ctr)
     {
         bool result = true;
