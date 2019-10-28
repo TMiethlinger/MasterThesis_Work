@@ -42,11 +42,14 @@
 ### Folders ###
 data
 literature
+programs/src/field_distance_matrix/pbs
 
 ### Results ###
 #*.png
 #*.pdf
 field_distance_matrix.txt
+pbs_error.txt
+pbs_output.txt
 
 ### CMake files ###
 CMakeCache.txt
