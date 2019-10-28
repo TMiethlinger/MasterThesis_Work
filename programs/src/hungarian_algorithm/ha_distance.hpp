@@ -13,7 +13,6 @@ namespace ha_distance
     using std::vector;
 
     typedef vector<double> VD;
-    typedef vector<VD> VVD;
 
     // Distance functions
 

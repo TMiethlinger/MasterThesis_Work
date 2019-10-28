@@ -12,16 +12,18 @@
 
 namespace ha_costobject
 {
+    using std::function;
+    using std::pair;
     using std::vector;
 
     typedef vector<double> VD;
     typedef vector<VD> VVD;
-    typedef std::pair<int, double> PID;
+    typedef pair<int, double> PID;
 
     // Maximum cost, symbolizing infinity
     constexpr double cost_max = (double)std::numeric_limits<int>::max();
 
-    VVD create_costobject_adjmatrix(int N, VVD &Xa, VVD &Xb, std::function<double(VD&, VD&, double, double)> d, double l, double v)
+    VVD create_costobject_adjmatrix(int N, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
     {
         // Define cost matrix object
         VVD cost_adjmatrix(N, VD(N, 0.0));
@@ -43,7 +45,7 @@ namespace ha_costobject
         return cost_adjmatrix;
     }
 
-    VVD create_costobject_adjmatrix(int N, int N_neighbours, VVD &Xa, VVD &Xb, std::function<double(VD&, VD&, double, double)> d, double l, double v)
+    VVD create_costobject_adjmatrix(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
     {
         // Define cost matrix object with standard value cost_max
         VVD cost_adjmatrix(N, VD(N, cost_max));
@@ -107,7 +109,7 @@ namespace ha_costobject
         return cost_adjmatrix;
     }
 
-    vector<vector<PID>> create_costobject_adjlist_plain(int N, int N_neighbours, VVD &Xa, VVD &Xb, std::function<double(VD&, VD&, double, double)> d, double l, double v)
+    vector<vector<PID>> create_costobject_adjlist_plain(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
     {
         // Calculate
         VVD cost_adjmatrix = create_costobject_adjmatrix(N, N_neighbours, Xa, Xb, d, l, v);
@@ -138,7 +140,7 @@ namespace ha_costobject
         return cost_adjlist;
     }
 
-    vector<vector<PID>> create_costobject_adjlist_slim(int N, int N_neighbours, VVD &Xa, VVD &Xb, std::function<double(VD&, VD&, double, double)> d, double l, double v)
+    vector<vector<PID>> create_costobject_adjlist_slim(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
     {
         // Define cost matrix object with standard value cost_max
         vector<vector<PID>> cost_adjlist(N, vector<PID>(2 * N_neighbours));
@@ -187,7 +189,6 @@ namespace ha_costobject
         {
             cost_adjlist_tmp[i].assign(cost_adjlist_row[i].begin(), cost_adjlist_row[i].end());
         }
-
         bool found;
         for(int j = 0; j < N; j++)
         {
