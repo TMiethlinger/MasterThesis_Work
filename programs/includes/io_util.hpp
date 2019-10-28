@@ -57,6 +57,16 @@ namespace io_util
         std::cout << std::endl;
     }
 
+    template <class T>
+    void print_vector(std::vector<T> &vec)
+    {
+        for(std::size_t i = 0; i < vec.size(); i++)
+        {
+            std::cout << vec[i] << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
     bool read_double_matrix(std::string filepathname, std::vector<std::vector<double>> &matrix, std::string del, int row_min, int row_ctr, int col_min, int col_ctr)
     {
         bool result = true;
