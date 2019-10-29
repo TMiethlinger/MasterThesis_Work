@@ -2,15 +2,56 @@
 
 cd build
 
-Nlist=(10 20 40 70 100 200 400 700 1000 2000 4000 7000 10000 20000 40000)
+Nlist=(100 200 400 600 800 1000 2000 4000 6000 8000 10000 20000 40000)
 
 filenamepart="../../../../results/hungarian_algorithm_benchmark/"
 
-for i in {1..5}
+for i in {1..3}
 do
-    filename="${filenamepart}timing_full_$i.txt"
+    filename="${filenamepart}timing_adjmat_$i.txt"
     rm -rf ${filename}
     for N in ${Nlist[@]}; do
-        ./hungarian_algorithm_benchmark --N=$N --dim=6 >> ${filename}
+        Nm=$N
+        ./hungarian_algorithm_benchmark --N=$N --N_match=$Nm --dim=6 >> ${filename}
+    done
+done
+
+for i in {1..3}
+do
+    filename="${filenamepart}timing_adjlst_${i}_10.txt"
+    rm -rf ${filename}
+    for N in ${Nlist[@]}; do
+        Nm=$((N / 10))
+        ./hungarian_algorithm_benchmark --N=$N --N_match=$Nm --dim=6 >> ${filename}
+    done
+done
+
+for i in {1..3}
+do
+    filename="${filenamepart}timing_adjlst_${i}_5.txt"
+    rm -rf ${filename}
+    for N in ${Nlist[@]}; do
+        Nm=$((N / 5))
+        ./hungarian_algorithm_benchmark --N=$N --N_match=$Nm --dim=6 >> ${filename}
+    done
+done
+
+for i in {1..3}
+do
+    filename="${filenamepart}timing_adjlst_${i}_4.txt"
+    rm -rf ${filename}
+    for N in ${Nlist[@]}; do
+        Nm=$((N / 4))
+        ./hungarian_algorithm_benchmark --N=$N --N_match=$Nm --dim=6 >> ${filename}
+    done
+done
+
+for i in {1..3}
+do
+    filename="${filenamepart}timing_adjlst_${i}_2.txt"
+    rm -rf ${filename}
+    for N in ${Nlist[@]}; do
+        Nm=$((N / 2))
+        ./hungarian_algorithm_benchmark --N=$N --N_match=$Nm --dim=6 >> ${filename}
     done
 done
