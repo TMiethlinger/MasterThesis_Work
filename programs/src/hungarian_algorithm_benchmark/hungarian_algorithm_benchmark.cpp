@@ -18,13 +18,13 @@
 // Internal classes
 #include "../../includes/io_util.hpp"
 #include "../hungarian_algorithm/ha_core.hpp"
-#include "../hungarian_algorithm/ha_costobject.hpp"
+#include "../hungarian_algorithm/ha_cost.hpp"
 #include "../hungarian_algorithm/ha_distance.hpp"
 
+using std::array;
 using std::pair;
 using std::size_t;
 using std::string;
-using std::array;
 using std::vector;
 using std::cout;
 using std::endl;
@@ -78,20 +78,20 @@ int main(int argc, char * argv[])
 
     if(N_match == N)
     {
-        VVD cost_adjmatrix = ha_costobject::create_costobject_adjmatrix(N, Xa, Xb, ha_distance::d_sum_3, l, v);
+        VVD cost_adjmatrix = ha_cost::create_costobject_adjmatrix(N, Xa, Xb, ha_distance::d_sum_3, l, v);
         auto start = high_resolution_clock::now();
         VI q = ha_core::min_cost_matching_adjmatrix(cost_adjmatrix);
         auto stop = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(stop - start);
+        auto duration = duration_cast<milliseconds>(stop - start);
         cout << N << " " << duration.count() << endl;
     }
     else if(0 < N_match && N_match <= N)
     {
-        vector<vector<PID>> cost_adjlist = ha_costobject::create_costobject_adjlist_plain(N, N_match, Xa, Xb, ha_distance::d_sum_3, l, v);
+        vector<vector<PID>> cost_adjlist = ha_cost::create_costobject_adjlist_plain(N, N_match, Xa, Xb, ha_distance::d_sum_3, l, v);
         auto start = high_resolution_clock::now();
         VI q = ha_core::min_cost_matching_adjlist(cost_adjlist);
         auto stop = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(stop - start);
+        auto duration = duration_cast<milliseconds>(stop - start);
         cout << N << " " << N_match << " " << duration.count() << endl;
     }
 }
