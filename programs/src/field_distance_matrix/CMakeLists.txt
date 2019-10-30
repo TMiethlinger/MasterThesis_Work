@@ -1,8 +1,3 @@
-#mkdir build
-#cd build
-#cmake -DBoost_INCLUDE_DIR="/home/k3501/k354524/apps/boost_1_71_0/" -DBoost_LIBRARY_DIR="/home/k3501/k354524/apps/boost_1_71_0/stage/lib/" ..
-#make
-#./helloworld --n=...
 cmake_minimum_required(VERSION 3.0)
 project(field_distance_matrix CXX)
 
