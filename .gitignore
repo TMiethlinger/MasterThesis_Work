@@ -43,6 +43,7 @@
 data
 literature
 programs/src/field_distance_matrix/pbs
+results/
 
 ### Results ###
 #*.png
