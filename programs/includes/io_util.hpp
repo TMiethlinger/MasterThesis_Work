@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <string>
 #include <vector>
+#include <utility> // std::pair
 
 // Boost
 #include <boost/algorithm/string.hpp>
@@ -25,8 +26,9 @@ namespace io_util
     // Create directory or write error unless the directory already exists
     void create_working_directory(const char *folderpath)
     {
+        std::string folderpath_s(folderpath);
         if (mkdir(folderpath, 0777) == -1 && errno != 17) // errno == 17 -> directory already exists
-            std::cerr << "Error: " << strerror(errno) << std::endl; 
+            std::cerr << "Error: " << strerror(errno) << " (" << folderpath_s << ")" << std::endl; 
     }
 
     template <class T>
@@ -63,6 +65,19 @@ namespace io_util
         for(std::size_t i = 0; i < vec.size(); i++)
         {
             std::cout << vec[i] << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
+    void print_adjlist(std::vector<std::vector<std::pair<int, double>>> &adjlist)
+    {    
+        for(size_t i = 0; i < adjlist.size(); i++)
+        {
+            for(size_t j = 0; j < adjlist[i].size(); j++)
+            {
+                std::cout << "(" << adjlist[i][j].first << ", " << adjlist[i][j].second << ") ";
+            }
+            std::cout << std::endl;
         }
         std::cout << std::endl;
     }
@@ -148,7 +163,8 @@ namespace io_util
         return result;
     }
 
-    bool write_vector_result(std::string filepathname, std::vector<double>& vector)
+    template <class T>
+    bool write_vector_result(std::string filepathname, std::vector<T>& vector)
     {
         bool success = false;
 
@@ -173,7 +189,8 @@ namespace io_util
         return success;
     }
 
-    bool write_matrix_result(std::string filepathname, std::vector<std::vector<double>>& matrix)
+    template <class T>
+    bool write_matrix_result(std::string filepathname, std::vector<std::vector<T>>& matrix)
     {
         bool success = false;
 
@@ -204,7 +221,37 @@ namespace io_util
         return success;
     }
 
+    template <class T>
+    bool write_matrix_result_appending(std::string filepathname, std::vector<std::vector<T>>& matrix)
+    {
+        bool success = false;
 
+        std::ofstream filestream;
+        filestream.open(filepathname, std::ios_base::app);
+        if(filestream.is_open())
+        {
+            for(std::size_t i = 0; i < matrix.size(); i++)
+            {
+                for(std::size_t j = 0; j < matrix[i].size(); j++)
+                {
+                    filestream << matrix[i][j];
+                    if(j < matrix[i].size() - 1)
+                        filestream << " ";
+                }
+                filestream << std::endl;
+            }
+
+            success = true;
+            filestream.close();
+        }
+        else
+        {
+            success = false;
+            std::cout << "Error: Could not write to file " << filepathname << "!" << std::endl;
+        }
+
+        return success;
+    }
 
     // IO functions specifically to read/write particle data
 
