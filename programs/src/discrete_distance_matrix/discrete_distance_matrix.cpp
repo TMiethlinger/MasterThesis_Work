@@ -23,7 +23,7 @@
 #include "../../includes/io_util.hpp"
 #include "../../includes/general_util.hpp"
 #include "../hungarian_algorithm/ha_core.hpp"
-#include "../hungarian_algorithm/ha_costobject.hpp"
+#include "../hungarian_algorithm/ha_cost.hpp"
 #include "../hungarian_algorithm/ha_distance.hpp"
 
 using std::array;
@@ -56,9 +56,11 @@ int njobs;
 string inputfolder_parent = "/home/k3501/k354524/master_thesis_work/data/";
 string inputfolder_relative; // e.g. Liggghts/.../
 string inputfilenamepart;
-string outputfolder_parent = "/home/k3501/k354524/master_thesis_work/results/field_distance_matrix/";
+string outputfolder_parent = "/home/k3501/k354524/master_thesis_work/results/discrete_distance_matrix/";
 string outputfolder_relative; // e.g. Liggghts/.../
-string outputfilename = "field_distance_matrix.txt";
+string outputfilename = "discrete_distance_matrix.txt";
+string outputfilepathname;
+int output_mode;
 
 int main(int argc, char * argv[])
 {
@@ -84,7 +86,8 @@ int main(int argc, char * argv[])
     ("tstep", value<int>()->default_value(1), "Time index step size")
     ("inputfolder_relative", value<string>()->default_value("Liggghts/"), "Relative input foldername")
     ("inputfilenamepart", value<string>()->default_value("dump"), "Input file name part")
-    ("outputfolder_relative", value<string>()->default_value("Liggghts/"), "Relative output foldername");
+    ("outputfolder_relative", value<string>()->default_value("Liggghts/"), "Relative output foldername")
+    ("output_mode", value<int>()->default_value(0), "Output mode for results. 0: Only rank 0 outputs after gathering all partial results. 1: Each rank outputs their results.");
     variables_map vm;
     store(parse_command_line(argc, argv, desc_commandline), vm);
     N = vm["N"].as<int>();
@@ -99,6 +102,17 @@ int main(int argc, char * argv[])
     inputfolder_relative = vm["inputfolder_relative"].as<string>();
     inputfilenamepart = vm["inputfilenamepart"].as<string>();
     outputfolder_relative = vm["outputfolder_relative"].as<string>();
+    output_mode = vm["output_mode"].as<int>();
+    if(output_mode == 0)
+    {
+        outputfilepathname = outputfolder_parent + outputfolder_relative + outputfilename;
+    }
+    else if(output_mode == 1)
+    {
+        vector<string> parts;
+        boost::split(parts, outputfilename, boost::is_any_of("."));
+        outputfilepathname = outputfolder_parent + outputfolder_relative + parts[0] + "_" + std::to_string(world_rank) + "." + parts[1];
+    }
 
     // Let rank 0 create the outputdirectory, if it does not exist
     if(world_rank == 0)
@@ -121,7 +135,7 @@ int main(int argc, char * argv[])
         }
     }
 
-    // For each rank and its jobs, save the result of the computation into field_distance_results
+    // For each rank and its jobs, save the result of the computation into discrete_distance_results
     VD discrete_distance_results(njobs_my_rank, 0);
 
     // Initialize particle state vectors Xa and Xb
@@ -132,8 +146,9 @@ int main(int argc, char * argv[])
     int t1, t2, t1_prev, t2_prev;
     t1 = t2 = t1_prev = t2_prev = -1;
     array<int, 2> job_index_arr;
+    vector<vector<string>> output_object(1, vector<string>(3));
 
-    for(size_t i = 0; i != njobs_my_rank; i++)
+    for(size_t i = 0; i < njobs_my_rank; i++)
     {
         job_index_arr = total_jobs_vector[jobs_vector_my_rank[i]];
 
@@ -162,66 +177,76 @@ int main(int argc, char * argv[])
         }
 
         // Compute the distance adjacency lists
-        vector<vector<PID>> cost_adjlist = ha_costobject::create_costobject_adjlist_plain(N, N_match, Xa, Xb, ha_distance::d_sum_3, l, v);
+        vector<vector<PID>> cost_adjlist = ha_cost::create_costobject_adjlist_plain(N, N_match, Xa, Xb, ha_distance::d_sum_3, l_inv, v_inv);
 
         // Compute the hungarian algorithm matching solution for adjacency lists
         VI q = ha_core::min_cost_matching_adjlist(cost_adjlist);
 
         // Compute the total cost from the matching solution
-        discrete_distance_results[i] = compute_cost_from_adjlist(N, cost_adjlist, q);
+        discrete_distance_results[i] = ha_cost::compute_cost_from_adjlist(N, cost_adjlist, q);
+
+        // Write partial results if requested
+        if(output_mode == 1)
+        {
+            output_object[0][0] = std::to_string(t1);
+            output_object[0][1] = std::to_string(t2);
+            output_object[0][2] = std::to_string(discrete_distance_results[i]);
+
+            io_util::write_matrix_result_appending(outputfilepathname, output_object);
+        }
 
         // Update indices
         t1_prev = t1;
         t2_prev = t2;
     }
 
-    // Write the intermediate distance results 
-    // IO::WriteVectorResult(outputfolder_parent + outputfolder_relative + "field_distance_matrix_" + std::to_string(world_rank) + ".txt", field_distance_results);
-
-    // Rank 0 needs to compose the field_distance_matrix
-    if(world_rank == 0)
+    if(output_mode == 0)
     {
-        // Save all distances from each rank into the following vector
-        VD total_field_distance_results(njobs, 0);
-        // Calculate how the full problem (computing the distance_matrix) was split up into jobs
-        int njobs_per_rank_min = njobs / world_size;
-        int njobs_per_rank_max = njobs % world_size == 0 ? njobs_per_rank_min : njobs_per_rank_min + 1;
-        int min_rank = njobs % world_size;
-
-        // Add own intermediate results to total resul vector
-        for(int i = 0; i < njobs_per_rank_max; i++)
+        // Rank 0 needs to compose the discrete_distance_matrix
+        if(world_rank == 0)
         {
-            total_field_distance_results[i] = field_distance_results[i];
-        }
+            // Save all distances from each rank into the following vector
+            VD total_discrete_distance_results(njobs, 0);
+            // Calculate how the full problem (computing the distance_matrix) was split up into jobs
+            int njobs_per_rank_min = njobs / world_size;
+            int njobs_per_rank_max = njobs % world_size == 0 ? njobs_per_rank_min : njobs_per_rank_min + 1;
+            int min_rank = njobs % world_size;
 
-        // Receive all intermediate results, with vector lengths recv_result_size.
-        // recv_offset is a variable which shifts the beginning of the receive buffer.
-        int recv_result_size;
-        int recv_offset = njobs_per_rank_max;
-        for(int w = 1; w < world_size; w++)
-        {
-            recv_result_size = w < min_rank ? njobs_per_rank_max : njobs_per_rank_min;
-            MPI_Recv(total_field_distance_results.data() + recv_offset, recv_result_size, MPI_DOUBLE, w, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            recv_offset += recv_result_size;
-        }
-
-        // Set the final field_distance_matrix from received results
-        VVD field_distance_matrix(nsteps, VD(nsteps, 0));
-        for(int i1 = 0, i = 0; i1 < nsteps - 1; i1++)
-        {
-            for(int i2 = i1 + 1; i2 < nsteps; i2++, i++)
+            // Add own intermediate results to total resul vector
+            for(int i = 0; i < njobs_per_rank_max; i++)
             {
-                field_distance_matrix[i1][i2] = field_distance_matrix[i2][i1] = total_field_distance_results[i];
+                total_discrete_distance_results[i] = discrete_distance_results[i];
             }
-        }
 
-        // Write the computed distance matrix based on fields into this filepathname
-        io_util::write_matrix_result(outputfolder_parent + outputfolder_relative + outputfilename, field_distance_matrix);
-    }
-    // Each other rank sends their intermediate results to rank 0
-    else
-    {
-        MPI_Send(field_distance_results.data(), field_distance_results.size(), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+            // Receive all intermediate results, with vector lengths recv_result_size.
+            // recv_offset is a variable which shifts the beginning of the receive buffer.
+            int recv_result_size;
+            int recv_offset = njobs_per_rank_max;
+            for(int w = 1; w < world_size; w++)
+            {
+                recv_result_size = w < min_rank ? njobs_per_rank_max : njobs_per_rank_min;
+                MPI_Recv(total_discrete_distance_results.data() + recv_offset, recv_result_size, MPI_DOUBLE, w, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                recv_offset += recv_result_size;
+            }
+
+            // Set the final discrete_distance_matrix from received results
+            VVD discrete_distance_matrix(nsteps, VD(nsteps, 0));
+            for(int i1 = 0, i = 0; i1 < nsteps - 1; i1++)
+            {
+                for(int i2 = i1 + 1; i2 < nsteps; i2++, i++)
+                {
+                    discrete_distance_matrix[i1][i2] = discrete_distance_matrix[i2][i1] = total_discrete_distance_results[i];
+                }
+            }
+
+            // Write the computed distance matrix based on discretes into this filepathname
+            io_util::write_matrix_result(outputfilepathname, discrete_distance_matrix);
+        }
+        // Each other rank sends their intermediate results to rank 0
+        else
+        {
+            MPI_Send(discrete_distance_results.data(), discrete_distance_results.size(), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        }
     }
 
     // Finalize the MPI environment.
