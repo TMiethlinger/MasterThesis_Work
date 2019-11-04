@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <vector>
+#include <list>
 #include <limits>
 #include <utility> // std::pair
 
@@ -21,6 +22,7 @@ namespace ha_core
     typedef vector<int> VI;
     typedef vector<double> VD;
     typedef vector<VD> VVD;
+    typedef list<int> LI;
     typedef pair<int, double> PID;
 
     // Precision which is used to check for zero cost
@@ -29,13 +31,20 @@ namespace ha_core
     // Maximum cost, symbolizing infinity
     constexpr double cost_max = (double)std::numeric_limits<int>::max();
 
+    template <class T>
+    void print_vector(std::vector<T> &vec)
+    {
+        for(std::size_t i = 0; i < vec.size(); i++)
+        {
+            std::cout << vec[i] << " ";
+        }
+        std::cout << std::endl;
+    }
 
     // Compute the hungarian algorithm minimum cost matching solution
     // for an adjacency cost matrix
-    VI min_cost_matching_adjmatrix(VVD &cost_adjmatrix)
+    VI min_cost_matching_adjmatrix(int N, VVD &cost_adjmatrix)
     {
-        int N = cost_adjmatrix.size();
-
         // construct dual feasible solution
         VD u(N, cost_max);
         VD v(N, cost_max);
@@ -91,7 +100,7 @@ namespace ha_core
             int s = 0;
             while(q[s] != -1)
                 s++;
- 
+
             // initialize Dijkstra
             std::fill(dad.begin(), dad.end(), -1);
             std::fill(seen.begin(), seen.end(), 0);
@@ -105,6 +114,7 @@ namespace ha_core
             {
                 // find closest
                 j = -1;
+
                 for(int k = 0; k < N; k++)
                 {
                     if(!seen[k])
@@ -164,10 +174,158 @@ namespace ha_core
         return q;
     }
 
-    VI min_cost_matching_adjlist(vector<vector<PID>> &cost_adjlist)
+    VI min_cost_matching_adjlist_1(int N, vector<vector<PID>> &cost_adjlist)
     {
-        int N = cost_adjlist.size();
+        VD u(N, cost_max);
+        VD v(N, cost_max);
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0; j < size; j++)
+            {
+                u[i] = std::min(u[i], cost_adjlist[i][j].second);
+            }
+        }
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                v[y] = std::min(v[y], cost_adjlist[i][j].second - u[i]);
+            }
+        }
 
+        VI q = VI(N, -1);
+        VI q_inv = VI(N, -1);
+        int mated = 0;
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                if(q_inv[y] != -1)
+                    continue;
+
+                if(fabs(cost_adjlist[i][j].second - u[i] - v[y]) < precision)
+                {
+                    q[i] = y;
+                    q_inv[y] = i;
+                    mated++;
+                    break;
+                }
+            }
+        }
+
+        VD dist(N);
+        VI dad(N);
+        VI seen(N);
+        LI left_vert;
+
+        while(mated < N)
+        {
+            left_vert.clear();
+
+            int s = 0;
+            while(q[s] != -1)
+                s++;
+
+
+            const int size_s = cost_adjlist[s].size();
+            std::fill(dad.begin(), dad.end(), -1);
+            std::fill(seen.begin(), seen.end(), 0);
+            std::fill(dist.begin(), dist.end(), cost_max);
+            for(int k = 0, h; k < size_s; k++)
+            {
+                h = cost_adjlist[s][k].first;
+                dist[h] = cost_adjlist[s][k].second - u[s] - v[h];
+            }
+
+            int j = 0;
+            int i = -1;
+            while(true)
+            {
+                j = -1;
+
+                if(i == -1)
+                    i = s;                
+                left_vert.push_front(i);
+
+                for(LI::iterator it = left_vert.begin(); it != left_vert.end() && j == -1; it++)
+                {
+                    int i_past = *it;
+                    int size_i_past = cost_adjlist[i_past].size();
+
+                    for(int k = 0, h; k < size_i_past; k++)
+                    {
+                        h = cost_adjlist[i_past][k].first;
+
+                        if(!seen[h])
+                        {
+                            if(j == -1 || dist[h] < dist[j])
+                                j = h;
+                        }
+                    }
+                }
+
+                seen[j] = 1;
+
+                if(q_inv[j] == -1)
+                    break;
+
+                i = q_inv[j];
+                int size_i = cost_adjlist[i].size();
+                for(int k = 0, h; k < size_i; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h])
+                    {
+                        const double new_dist = dist[j] + cost_adjlist[i][k].second - u[i] - v[h];
+                        if(new_dist < dist[h])
+                        {
+                            dist[h] = new_dist;
+                            dad[h] = j;
+                        }
+                    }
+                }
+            }
+
+            for(int h = 0; h < N; h++)
+            {
+                if(h != j && seen[h])
+                {
+                    const double delta = dist[h] - dist[j];
+                    v[h] += delta;
+                    u[q_inv[h]] -= delta;
+                }
+            }
+            u[s] += dist[j];
+
+            while(dad[j] >= 0)
+            {
+                const int d = dad[j];
+                q_inv[j] = q_inv[d];
+                q[q_inv[j]] = j;
+                j = d;
+            }
+            q_inv[j] = s;
+            q[s] = j;
+
+            mated++;
+        }
+
+        return q;
+    }
+
+    
+
+
+
+    // DEPRECATED:
+
+    VI min_cost_matching_adjlist_old(int N, vector<vector<PID>> &cost_adjlist)
+    {
         function<bool(PID, PID)> comparator_PID = 
         [](PID x1, PID x2)
         {

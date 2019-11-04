@@ -24,14 +24,10 @@ namespace ha_cost
     // Maximum cost, symbolizing infinity
     constexpr double cost_max = (double)std::numeric_limits<int>::max();
 
-    VVD create_costobject_adjmatrix(int N, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
+    VVD create_costobject_adjmatrix(int N, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l_inv, double v_inv)
     {
         // Define cost matrix object
         VVD cost_adjmatrix(N, VD(N, 0.0));
-
-        // Invert l and v and store result to obtain speed-up
-        double l_inv = 1.0 / l;
-        double v_inv = 1.0 / v;
 
         // Compute cost matrix for each pair (i, j)
         // from the distance d
@@ -46,14 +42,10 @@ namespace ha_cost
         return cost_adjmatrix;
     }
 
-    VVD create_costobject_adjmatrix(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
+    VVD create_costobject_adjmatrix(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l_inv, double v_inv)
     {
         // Define cost matrix object with standard value cost_max
         VVD cost_adjmatrix(N, VD(N, cost_max));
-
-        // Invert l and v and store result to obtain speed-up
-        double l_inv = 1.0 / l;
-        double v_inv = 1.0 / v;
 
         // Compute all distances and set the N_neighbours smallest ones for each row
         vector<PID> cost_node_row(N);
@@ -110,10 +102,10 @@ namespace ha_cost
         return cost_adjmatrix;
     }
 
-    vector<vector<PID>> create_costobject_adjlist_plain(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
+    vector<vector<PID>> create_costobject_adjlist_plain(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l_inv, double v_inv)
     {
         // Calculate
-        VVD cost_adjmatrix = create_costobject_adjmatrix(N, N_neighbours, Xa, Xb, d, l, v);
+        VVD cost_adjmatrix = create_costobject_adjmatrix(N, N_neighbours, Xa, Xb, d, l_inv, v_inv);
 
         // Define cost matrix object with standard value cost_max
         vector<vector<PID>> cost_adjlist(N);
@@ -141,14 +133,10 @@ namespace ha_cost
         return cost_adjlist;
     }
 
-    vector<vector<PID>> create_costobject_adjlist_slim(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l, double v)
+    vector<vector<PID>> create_costobject_adjlist_slim(int N, int N_neighbours, VVD &Xa, VVD &Xb, function<double(VD&, VD&, double, double)> d, double l_inv, double v_inv)
     {
         // Define cost matrix object with standard value cost_max
         vector<vector<PID>> cost_adjlist(N, vector<PID>(2 * N_neighbours));
-
-        // Invert l and v and store result to obtain speed-up
-        double l_inv = 1.0 / l;
-        double v_inv = 1.0 / v;
 
         // Find the M nearest neighbours per row
         vector<vector<PID>> cost_adjlist_row(N, vector<PID>(N_neighbours));
@@ -227,7 +215,8 @@ namespace ha_cost
         return cost_adjlist;
     }
 
-    double compute_cost_from_adjmatrix(int N, VVD& cost_adjmatrix, VI q)
+    // Compute costs from given matching solution
+    double compute_total_cost_adjmatrix(int N, VVD& cost_adjmatrix, VI q)
     {
         double total_cost = 0.0;
         int count = 0;
@@ -249,7 +238,7 @@ namespace ha_cost
         return total_cost;
     }
 
-    double compute_cost_from_adjlist(int N, vector<vector<PID>>& cost_adjlist, VI q)
+    double compute_total_cost_adjlist(int N, vector<vector<PID>>& cost_adjlist, VI q)
     {
         double total_cost = 0.0;
         int count = 0;
@@ -259,15 +248,19 @@ namespace ha_cost
         {
             if(q[i] != -1)
             {
-                count++;
                 size = cost_adjlist[i].size();
+                bool found = false;
                 for(int j = 0; j < size; j++)
                 {
                     if(q[i] == cost_adjlist[i][j].first)
                     {
                         total_cost += cost_adjlist[i][j].second;
+                        count++;
+                        found = true;
                     }
                 }
+                if(!found)
+                    total_cost += cost_max;
             }
         }
 
@@ -279,71 +272,3 @@ namespace ha_cost
         return total_cost;
     }
 };
-
-    // Create cost object for assignment using hungarian algorithm
-    // create_co ... create cost object
-    // amatrix ... use full adjacency matrix as representation for cost graph
-    // alist ... use adjacency list as representation for cost graph
-    // nearnb ... make cost graph sparse by only considering the M nearest neighbours
-
-    // Finite Domain Boundary Conditions
-    //public:
-
-    // VVD create_cost_matrix_naive_position_nearnb(VVD &Ra, VVD &Rb, int M);
-    // vector<vector<ParticleAssignment::SkeletonNode>> create_cost_matrix_adjlist_position_nearnb(VVD &Ri, VVD &Rj, int M);
-
-
-
-
-
-
-    /*static vector<vector<double>> CreateCostMatrix(vector<vector<double>> &Ri, vector<vector<double>> &Vi,
-    vector<vector<double>> &Rj, vector<vector<double>> &Vj);
-    static vector<vector<double>> CreateCostMatrix(vector<vector<double>> &Ri, vector<vector<double>> &Vi,
-    vector<vector<double>> &Rj, vector<vector<double>> &Vj, int M);
-    static vector<vector<ParticleAssignment::SkeletonNode>> CreateCostSkeleton(vector<vector<double>> &Ri, vector<vector<double>> &Vi,
-    vector<vector<double>> &Rj, vector<vector<double>> &Vj, int M);
-    static vector<vector<double>> CreateCostMatrixPBC(vector<vector<double>> &Ri, vector<vector<double>> &Vi,
-    vector<vector<double>> &Rj, vector<vector<double>> &Vj, double L, double L2);*/
-
-/*
-
-vector<vector<double>> ParticleAssignment::CreateCostMatrix(vector<vector<double>> &Ri, vector<vector<double>> &Rj)
-{
-    int N = Ri.size();
-    vector<vector<double>> costmatrix(N, vector<double>(N));
-
-    for(int i = 0; i < N; i++)
-    {
-    for(int j = 0; j < N; j++)
-    {
-        costmatrix[i][j] = EuclideanMetric(Ri[i], Rj[j]);
-    }
-    }
-
-    return costmatrix;
-}
-
-class ParticleAssignment
-{
-    public:
-    static ParticleAssignment::Result MinCostMatching(vector<vector<double>> &Ri, vector<vector<double>> &Rj, int M, int B);
-    static ParticleAssignment::Result MinCostMatchingMatrix(vector<vector<double>> &costmatrix);
-    static ParticleAssignment::Result MinCostMatchingSkeleton(vector<vector<ParticleAssignment::SkeletonNode>> &costskeleton);
-    static vector<vector<double>> CreateCostMatrix(vector<vector<double>> &Ri, vector<vector<double>> &Rj);
-    static vector<vector<double>> CreateCostMatrix(vector<vector<double>> &Ri, vector<vector<double>> &Rj, int M);
-    static vector<vector<ParticleAssignment::SkeletonNode>> CreateCostSkeleton(vector<vector<double>> &Ri, vector<vector<double>> &Rj, int M);
-
-
-    private:
-
-
-    static ParticleAssignment::CostObject CostFromMatchingMatrix(vector<vector<double>> &costmatrix, vector<int> &q);
-    static ParticleAssignment::CostObject CostFromMatchingSkeleton(vector<vector<ParticleAssignment::SkeletonNode>> &costskeleton, vector<int> &q);
-    static ParticleAssignment::CostObject CostFromMatchingVectors(vector<vector<double>> &Ri, vector<vector<double>> &Rj, vector<int> &q);
-
-    static double EuclideanMetric(vector<double> &ri, vector<double> &rj);
-
-    static constexpr double precision = 0.000000001;
-    static constexpr double cost_max = (double)std::numeric_limits<int>::max();
-};*/
