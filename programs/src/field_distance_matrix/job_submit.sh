@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#PBS -o pbs/pbs_output2.txt
-#PBS -e pbs/pbs_error2.txt
+#PBS -o pbs/pbs_output.txt
+#PBS -e pbs/pbs_error.txt
 #PBS -l nodes=8:ppn=8
 #PBS -l walltime=24:00:00
 
@@ -21,5 +21,5 @@ tmax=12000000
 imin=$((tmin / tstep))
 imax=$((tmax / tstep))
 
-n=8
+n=12
 mpiexec ./field_distance_matrix --N=${N} --tmin=${tmin} --tmax=${tmax} --tstep=${tstep} --nx=${n} --ny=${n} --nz=${n} --inputfolder_relative="${simset}/${dataset}/" --inputfilenamepart=dump --outputfolder_relative="${simset}/${dataset}_${imin}_${imax}_${tstep}_${n}_${n}_${n}/"
