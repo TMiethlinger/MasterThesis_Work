@@ -39,6 +39,9 @@
 *.out
 *.app
 
+### Single Files ###
+programs/src/hungarian_algorithm/ha_core_dump.hpp
+
 ### Folders ###
 data
 literature
