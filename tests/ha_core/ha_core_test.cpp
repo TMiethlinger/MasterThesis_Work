@@ -39,6 +39,10 @@ int dim;
 double l = 1.0;
 double v = 1.0;
 
+bool check_unique(VI &q_list);
+int count_diff(int N, VI &q_mat, VI &q_list);
+int count_unmatched(int N, VI &q_list);
+
 int main(int argc, char * argv[])
 {
     options_description desc_commandline;
@@ -59,9 +63,6 @@ int main(int argc, char * argv[])
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
-for(int t = 0; t < 1; t++)
-{
-
     for(int i = 0; i < N; i++)
     {
         for(int j = 0; j < dim; j++)
@@ -78,40 +79,87 @@ for(int t = 0; t < 1; t++)
     }
 
     VVD cost_adjmatrix = ha_cost::create_costobject_adjmatrix(N, N_match, Xa, Xb, ha_distance::d_sum_3, l, v);
-    //io_util::print_matrix(cost_adjmatrix);
-    VI q_mat = ha_core::min_cost_matching_adjmatrix(N, cost_adjmatrix);
-    //io_util::print_vector(q_mat);
-    double c_mat = ha_cost::compute_total_cost_adjmatrix(N, cost_adjmatrix, q_mat);
-    // cout << c << endl << endl << endl << endl;
-
     vector<vector<PID>> cost_adjlist = ha_cost::create_costobject_adjlist_plain(N, N_match, Xa, Xb, ha_distance::d_sum_3, l, v);
-    //io_util::print_adjlist(cost_adjlist);
-    auto start_2 = high_resolution_clock::now();
-    VI q_list = ha_core::min_cost_matching_adjlist_1(N, cost_adjlist);
-    auto stop_2 = high_resolution_clock::now();
-    auto duration_2 = duration_cast<nanoseconds>(stop_2 - start_2);
-    cout << "duration2:" << (duration_2.count()/1000000) << endl;
-    //io_util::print_vector(q_list);
-    double c_list = ha_cost::compute_total_cost_adjlist(N, cost_adjlist, q_list);
-    // cout << c << endl << endl;
-    bool same = c_mat == c_list && q_mat == q_list;
-    if(true)
-    {
-        int count_diff = 0;
-        int count_unmatched = 0;
-        auto it = std::unique(q_list.begin(), q_list.end());
-        bool wasUnique = (it == q_list.end());
-        for(int i = 0; i < N; i++)
-        { 
-            if(q_mat[i] != q_list[i])
-                count_diff++;
 
-            if(-1 == q_list[i])
-                count_unmatched++;
-        }
-        cout << "same: " << same << " count_unmatched:" << count_unmatched << " wasUnique:" << wasUnique << endl;
-        cout << c_mat << " " << c_list << " " << (c_list - c_mat) << endl;
-        cout << ha_cost::compute_total_cost_adjmatrix(N, cost_adjmatrix, q_list) << " " << ha_cost::compute_total_cost_adjlist(N, cost_adjlist, q_mat) << endl;
-    }
+
+    auto start_mat = high_resolution_clock::now();
+    VI q_mat = ha_core::min_cost_matching_adjmatrix(N, cost_adjmatrix);
+    auto duration_mat = duration_cast<nanoseconds>(high_resolution_clock::now() - start_mat);
+    double c_mat = ha_cost::compute_total_cost_adjmatrix(N, cost_adjmatrix, q_mat);
+
+
+    auto start_list_1 = high_resolution_clock::now();
+    VI q_list_1 = ha_core::min_cost_matching_adjlist_1(N, cost_adjlist);
+    auto duration_list_1 = duration_cast<nanoseconds>(high_resolution_clock::now() - start_list_1);
+    double c_list_1 = ha_cost::compute_total_cost_adjlist(N, cost_adjlist, q_list_1);
+    bool same_list_1 = c_mat == c_list_1 && q_mat == q_list_1;
+    bool is_unique_list_1 = check_unique(q_list_1);
+    int diff_list_1 = count_diff(N, q_mat, q_list_1);
+    int unmatched_list_1 = count_unmatched(N, q_list_1);
+
+
+    auto start_list_2 = high_resolution_clock::now();
+    VI q_list_2 = ha_core::min_cost_matching_adjlist_3(N, cost_adjlist, N_match);
+    auto duration_list_2 = duration_cast<nanoseconds>(high_resolution_clock::now() - start_list_2);
+    double c_list_2 = ha_cost::compute_total_cost_adjlist(N, cost_adjlist, q_list_2);
+    bool same_list_2 = c_mat == c_list_2 && q_mat == q_list_2;
+    bool is_unique_list_2 = check_unique(q_list_2);
+    int diff_list_2 = count_diff(N, q_mat, q_list_2);
+    int unmatched_list_2 = count_unmatched(N, q_list_2);
+
+    cout << "Number of left vertices N: " << N << endl;
+    cout << "Number of right vertices per left vertex N_match: " << N_match << endl;
+
+    //io_util::print_matrix(cost_adjmatrix);
+    //io_util::print_adjlist(cost_adjlist);
+
+    cout << "duration_mat [ms]: " << (duration_mat.count() / 1000000) << endl;
+    cout << "duration_list_1 [ms]: " << (duration_list_1.count() / 1000000) << endl;
+    cout << "duration_list_2 [ms]: " << (duration_list_2.count() / 1000000) << endl << endl;
+
+    //io_util::print_vector(q_mat);
+    //io_util::print_vector(q_list_1);
+    //io_util::print_vector(q_list_2);
+
+    cout << "cost_mat: " << c_mat << endl;
+    cout << "c_list_1: " << c_list_1 << endl;
+    cout << "c_list_2: " << c_list_2 << endl << endl;
+
+    cout << "same_list_1: " << same_list_1 << endl;
+    cout << "same_list_2: " << same_list_2 << endl << endl;
+
+    cout << "is_unique_list_1: " << is_unique_list_1 << endl;
+    cout << "is_unique_list_2: " << is_unique_list_2 << endl << endl;
+
+    cout << "diff_list_1: " << diff_list_1 << endl;
+    cout << "diff_list_2: " << diff_list_2 << endl << endl;
+
+    cout << "unmatched_list_1: " << unmatched_list_1 << endl;
+    cout << "unmatched_list_2: " << unmatched_list_2 << endl << endl;
 }
+
+bool check_unique(VI &q_list)
+{
+    auto it = std::unique(q_list.begin(), q_list.end());
+    return (it == q_list.end());
+}
+int count_diff(int N, VI &q_mat, VI &q_list)
+{
+    int ctr = 0;
+    for(int i = 0; i < N; i++)
+    {
+        if(q_mat[i] != q_list[i])
+                ctr++;
+    }
+    return ctr;
+}
+int count_unmatched(int N, VI &q_list)
+{
+    int ctr = 0;
+    for(int i = 0; i < N; i++)
+    {
+        if(-1 == q_list[i])
+            ctr++;
+    }
+    return ctr;
 }
