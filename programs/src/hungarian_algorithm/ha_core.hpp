@@ -6,6 +6,8 @@
 #include <cmath>
 #include <vector>
 #include <list>
+#include <set>
+#include <unordered_set>
 #include <limits>
 #include <utility> // std::pair
 
@@ -17,13 +19,17 @@ namespace ha_core
     using std::list;
     using std::pair;
     using std::set;
+    using std::unordered_set;
     using std::vector;
 
     typedef vector<int> VI;
     typedef vector<double> VD;
     typedef vector<VD> VVD;
     typedef list<int> LI;
+    typedef set<int> SI;
+    typedef unordered_set<int> UOSI;
     typedef pair<int, double> PID;
+    typedef vector<PID> VPID;
 
     // Precision which is used to check for zero cost
     constexpr double precision = 0.000000001;
@@ -31,15 +37,6 @@ namespace ha_core
     // Maximum cost, symbolizing infinity
     constexpr double cost_max = (double)std::numeric_limits<int>::max();
 
-    template <class T>
-    void print_vector(std::vector<T> &vec)
-    {
-        for(std::size_t i = 0; i < vec.size(); i++)
-        {
-            std::cout << vec[i] << " ";
-        }
-        std::cout << std::endl;
-    }
 
     // Compute the hungarian algorithm minimum cost matching solution
     // for an adjacency cost matrix
@@ -110,6 +107,7 @@ namespace ha_core
             }
 
             int j = 0;
+
             while(true)
             {
                 // find closest
@@ -231,7 +229,6 @@ namespace ha_core
             while(q[s] != -1)
                 s++;
 
-
             const int size_s = cost_adjlist[s].size();
             std::fill(dad.begin(), dad.end(), -1);
             std::fill(seen.begin(), seen.end(), 0);
@@ -269,11 +266,13 @@ namespace ha_core
                     }
                 }
 
+                if(j == -1)
+                    return q;
+
                 seen[j] = 1;
 
                 if(q_inv[j] == -1)
                     break;
-
                 i = q_inv[j];
                 int size_i = cost_adjlist[i].size();
                 for(int k = 0, h; k < size_i; k++)
@@ -318,24 +317,646 @@ namespace ha_core
         return q;
     }
 
-    
+
+    VI min_cost_matching_adjlist_2(int N, vector<vector<PID>> &cost_adjlist)
+    {
+        function<bool(PID, PID)> comparator_PID = [](PID x1, PID x2){ return x1.second != x2.second ? (x1.second < x2.second) : (x1.first < x2.first); };
+
+        VD u(N, cost_max);
+        VD v(N, cost_max);
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0; j < size; j++)
+            {
+                u[i] = std::min(u[i], cost_adjlist[i][j].second);
+            }
+        }
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                v[y] = std::min(v[y], cost_adjlist[i][j].second - u[i]);
+            }
+        }
+
+        VI q = VI(N, -1);
+        VI q_inv = VI(N, -1);
+        int mated = 0;
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                if(q_inv[y] != -1)
+                    continue;
+
+                if(fabs(cost_adjlist[i][j].second - u[i] - v[y]) < precision)
+                {
+                    q[i] = y;
+                    q_inv[y] = i;
+                    mated++;
+                    break;
+                }
+            }
+        }
+
+        VD dist(N);
+        VI dad(N);
+        VI seen(N);
+
+        set<PID, function<bool(PID, PID)>> dist_cache_ordered(comparator_PID);
+        pair<bool, set<PID, function<bool(PID, PID)>>::iterator> inactive_pair = std::make_pair(false, dist_cache_ordered.end());
+        vector<pair<bool, set<PID, function<bool(PID, PID)>>::iterator>> dist_active(N, inactive_pair);
+        while(mated < N)
+        {
+            dist_cache_ordered.clear();
+            std::fill(dist_active.begin(), dist_active.end(), inactive_pair);
+
+            int s = 0;
+            while(q[s] != -1)
+                s++;
+
+            const int size_s = cost_adjlist[s].size();
+            std::fill(dad.begin(), dad.end(), -1);
+            std::fill(seen.begin(), seen.end(), 0);
+            std::fill(dist.begin(), dist.end(), cost_max);
+            for(int k = 0, h; k < size_s; k++)
+            {
+                h = cost_adjlist[s][k].first;
+                dist[h] = cost_adjlist[s][k].second - u[s] - v[h];
+                if(dist_active[h].first)
+                {
+                    dist_cache_ordered.erase(dist_active[h].second);
+                    dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                }
+                else
+                {
+                    dist_active[h].first = true;
+                    dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                }
+            }
+
+            int j;
+            int i = -1;
+            while(true)
+            {
+                j = -1;
+
+                if(i == -1)
+                    i = s;          
+
+                set<PID>::iterator it_dist_min = dist_cache_ordered.begin();
+                if(it_dist_min != dist_cache_ordered.end())
+                {
+                    j = it_dist_min->first;
+                    dist_active[j].first = false;
+                    dist_active[j].second = dist_cache_ordered.end();
+                    dist_cache_ordered.erase(it_dist_min);
+                }
+
+                if(j == -1)
+                    return q;
+
+                seen[j] = 1;
+
+                if(q_inv[j] == -1)
+                    break;
+
+                i = q_inv[j];
+                int size = cost_adjlist[i].size();
+                for(int k = 0, h; k < size; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h])
+                    {
+                        const double new_dist = dist[j] + cost_adjlist[i][k].second - u[i] - v[h];
+                        if(new_dist < dist[h])
+                        {
+                            dist[h] = new_dist;
+                            dad[h] = j;
+
+                            if(dist_active[h].first)
+                            {
+                                dist_cache_ordered.erase(dist_active[h].second);
+                                dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                            }
+                            else
+                            {
+                                dist_active[h].first = true;
+                                dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for(int h = 0; h < N; h++)
+            {
+                if(h != j && seen[h])
+                {
+                    const double delta = dist[h] - dist[j];
+                    v[h] += delta;
+                    u[q_inv[h]] -= delta;
+                }
+            }
+            u[s] += dist[j];
+
+            while(dad[j] >= 0)
+            {
+                const int d = dad[j];
+                q_inv[j] = q_inv[d];
+                q[q_inv[j]] = j;
+                j = d;
+            }
+            q_inv[j] = s;
+            q[s] = j;
+
+            mated++;
+        }
+
+        return q;
+    }
+
+    VI min_cost_matching_adjlist_3(int N, vector<vector<PID>> &cost_adjlist, int size_limit_cache)
+    {
+        function<bool(PID, PID)> comparator_PID = [](PID x1, PID x2){ return x1.second != x2.second ? (x1.second < x2.second) : (x1.first < x2.first); };
+
+        VD u(N, cost_max);
+        VD v(N, cost_max);
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0; j < size; j++)
+            {
+                u[i] = std::min(u[i], cost_adjlist[i][j].second);
+            }
+        }
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                v[y] = std::min(v[y], cost_adjlist[i][j].second - u[i]);
+            }
+        }
+
+        VI q = VI(N, -1);
+        VI q_inv = VI(N, -1);
+        int mated = 0;
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                if(q_inv[y] != -1)
+                    continue;
+
+                if(fabs(cost_adjlist[i][j].second - u[i] - v[y]) < precision)
+                {
+                    q[i] = y;
+                    q_inv[y] = i;
+                    mated++;
+                    break;
+                }
+            }
+        }
+
+        VD dist(N);
+        VI dad(N);
+        VI seen(N);
+
+        set<PID, function<bool(PID, PID)>> dist_cache_ordered(comparator_PID);
+        pair<bool, set<PID, function<bool(PID, PID)>>::iterator> inactive_pair = std::make_pair(false, dist_cache_ordered.end());
+        vector<pair<bool, set<PID, function<bool(PID, PID)>>::iterator>> dist_active(N, inactive_pair);
+        set<PID>::iterator it_dist_max = dist_cache_ordered.end();
+        while(mated < N)
+        {
+            dist_cache_ordered.clear();
+            std::fill(dist_active.begin(), dist_active.end(), inactive_pair);
+
+            int s = 0;
+            while(q[s] != -1)
+                s++;
+
+            const int size_s = cost_adjlist[s].size();
+            std::fill(dad.begin(), dad.end(), -1);
+            std::fill(seen.begin(), seen.end(), 0);
+            std::fill(dist.begin(), dist.end(), cost_max);
+            for(int k = 0, h; k < size_s; k++)
+            {
+                h = cost_adjlist[s][k].first;
+                dist[h] = cost_adjlist[s][k].second - u[s] - v[h];
+                if(dist_active[h].first)
+                {
+                    dist_cache_ordered.erase(dist_active[h].second);
+                    dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                }
+                else
+                {
+                    dist_active[h].first = true;
+                    dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                }
+            }
+
+            int j;
+            int i = -1;
+            while(true)
+            {
+                j = -1;
+
+                if(i == -1)
+                    i = s;          
+
+                set<PID>::iterator it_dist_min = dist_cache_ordered.begin();
+                if(it_dist_min != dist_cache_ordered.end())
+                {
+                    j = it_dist_min->first;
+                    dist_active[j].first = false;
+                    dist_active[j].second = dist_cache_ordered.end();
+                    dist_cache_ordered.erase(it_dist_min);
+                }
+
+                if(j == -1)
+                    return q;
+
+                seen[j] = 1;
+
+                if(q_inv[j] == -1)
+                    break;
+
+                i = q_inv[j];
+                int size = cost_adjlist[i].size();
+                for(int k = 0, h; k < size; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h])
+                    {
+                        const double new_dist = dist[j] + cost_adjlist[i][k].second - u[i] - v[h];
+                        if(new_dist < dist[h])
+                        {
+                            dist[h] = new_dist;
+                            dad[h] = j;
+
+                            if(dist_active[h].first)
+                            {
+                                dist_cache_ordered.erase(dist_active[h].second);
+                                dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                            }
+                            else
+                            {
+                                dist_active[h].first = true;
+                                dist_active[h].second = dist_cache_ordered.insert(std::make_pair(h, dist[h])).first;
+                            }
+
+                            while((int)dist_cache_ordered.size() > size_limit_cache)
+                            {
+                                it_dist_max = dist_cache_ordered.end();
+                                it_dist_max--;
+
+                                int l = it_dist_max->first;
+                                dist_active[l].first = false;
+                                dist_active[l].second = dist_cache_ordered.end();
+                                dist_cache_ordered.erase(it_dist_max);
+                            }      
+                        }
+                    }
+                }
+            }
+
+            for(int h = 0; h < N; h++)
+            {
+                if(h != j && seen[h])
+                {
+                    const double delta = dist[h] - dist[j];
+                    v[h] += delta;
+                    u[q_inv[h]] -= delta;
+                }
+            }
+            u[s] += dist[j];
+
+            while(dad[j] >= 0)
+            {
+                const int d = dad[j];
+                q_inv[j] = q_inv[d];
+                q[q_inv[j]] = j;
+                j = d;
+            }
+            q_inv[j] = s;
+            q[s] = j;
+
+            mated++;
+        }
+
+        return q;
+    }
+
+    /* Cache Vector TODO
+    VI min_cost_matching_adjlist_4(int N, vector<vector<PID>> &cost_adjlist, int cache_size)
+    {
+        VD u(N, cost_max);
+        VD v(N, cost_max);
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0; j < size; j++)
+            {
+                u[i] = std::min(u[i], cost_adjlist[i][j].second);
+            }
+        }
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                v[y] = std::min(v[y], cost_adjlist[i][j].second - u[i]);
+            }
+        }
+
+        VI q = VI(N, -1);
+        VI q_inv = VI(N, -1);
+        int mated = 0;
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                if(q_inv[y] != -1)
+                    continue;
+
+                if(fabs(cost_adjlist[i][j].second - u[i] - v[y]) < precision)
+                {
+                    q[i] = y;
+                    q_inv[y] = i;
+                    mated++;
+                    break;
+                }
+            }
+        }
+
+        VD dist(N);
+        VI dad(N);
+        VI seen(N);
+        VPID dist_cache(cache_size, std::make_pair(-1, cost_max));
+        double dist_cache_value = cost_max;
+        double dist_cache_size = 0;
+
+        while(mated < N)
+        {
+            smallest_dist_right.resize(cache_size, std::make_pair(-1, 0));
+
+            int s = 0;
+            while(q[s] != -1)
+                s++;
+
+            const int size_s = cost_adjlist[s].size();
+            std::fill(dad.begin(), dad.end(), -1);
+            std::fill(seen.begin(), seen.end(), 0);
+            std::fill(dist.begin(), dist.end(), cost_max);
+            for(int k = 0, h; k < size_s; k++)
+            {
+                h = cost_adjlist[s][k].first;
+                dist[h] = cost_adjlist[s][k].second - u[s] - v[h];
+            }
+
+            int j = 0;
+            int i = -1;
+            while(true)
+            {
+                j = -1;
+
+                if(i == -1)
+                    i = s;          
+
+                int size_i = cost_adjlist[i].size();
+                for(int k = 0, h; k < size_i; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h] && (dist_cache_size < cache_size || dist[h] < dist_cache_value))
+                    {
+                        insert_dist_cache(dist_cache, h, dist[h]);
+                    }
+                }
+
+                for(int l = 0; l < cache_size; l++)
+                {
+                    int h = dist_cache[l].first;
+
+                    if(!seen[h])
+                    {
+                        if(j == -1 || dist[h] < dist[j])
+                            j = h;
+                    }
+                }
+
+                seen[j] = 1;
+
+                if(q_inv[j] == -1)
+                    break;
+
+                i = q_inv[j];
+                size_i = cost_adjlist[i].size();
+                for(int k = 0, h; k < size_i; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h])
+                    {
+                        const double new_dist = dist[j] + cost_adjlist[i][k].second - u[i] - v[h];
+                        if(new_dist < dist[h])
+                        {
+                            dist[h] = new_dist;
+                            dad[h] = j;
+                        }
+                    }
+                }
+            }
+
+            for(int h = 0; h < N; h++)
+            {
+                if(h != j && seen[h])
+                {
+                    const double delta = dist[h] - dist[j];
+                    v[h] += delta;
+                    u[q_inv[h]] -= delta;
+                }
+            }
+            u[s] += dist[j];
+
+            while(dad[j] >= 0)
+            {
+                const int d = dad[j];
+                q_inv[j] = q_inv[d];
+                q[q_inv[j]] = j;
+                j = d;
+            }
+            q_inv[j] = s;
+            q[s] = j;
+
+            mated++;
+        }
+
+        return q;
+    }*/
+
+    // Iterates through all unseen dist elements
+    // which are stored in an unordered_set
+    // Little speed-up -> commented
+    /*VI min_cost_matching_adjlist_5(int N, vector<vector<PID>> &cost_adjlist)
+    {
+        VD u(N, cost_max);
+        VD v(N, cost_max);
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0; j < size; j++)
+            {
+                u[i] = std::min(u[i], cost_adjlist[i][j].second);
+            }
+        }
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                v[y] = std::min(v[y], cost_adjlist[i][j].second - u[i]);
+            }
+        }
+
+        VI q = VI(N, -1);
+        VI q_inv = VI(N, -1);
+        int mated = 0;
+        for(int i = 0; i < N; i++)
+        {
+            const int size = cost_adjlist[i].size();
+            for(int j = 0, y; j < size; j++)
+            {
+                y = cost_adjlist[i][j].first;
+                if(q_inv[y] != -1)
+                    continue;
+
+                if(fabs(cost_adjlist[i][j].second - u[i] - v[y]) < precision)
+                {
+                    q[i] = y;
+                    q_inv[y] = i;
+                    mated++;
+                    break;
+                }
+            }
+        }
+
+        VD dist(N);
+        VI dad(N);
+        VI seen(N);
+        UOSI right_visited;
+
+        while(mated < N)
+        {
+            right_visited.clear();
+
+            int s = 0;
+            while(q[s] != -1)
+                s++;
 
 
+            const int size_s = cost_adjlist[s].size();
+            std::fill(dad.begin(), dad.end(), -1);
+            std::fill(seen.begin(), seen.end(), 0);
+            std::fill(dist.begin(), dist.end(), cost_max);
+            for(int k = 0, h; k < size_s; k++)
+            {
+                h = cost_adjlist[s][k].first;
+                dist[h] = cost_adjlist[s][k].second - u[s] - v[h];
+            }
+
+            int j = 0;
+            int i = -1;
+            while(true)
+            {
+                j = -1;
+
+                if(i == -1)
+                    i = s;          
+
+                int size_i = cost_adjlist[i].size();
+                for(int k = 0, h; k < size_i; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h])
+                        right_visited.insert(h);
+                }
+
+                for(UOSI::iterator it = right_visited.begin(); it != right_visited.end(); it++)
+                {
+                    int h = *it;
+
+                    if(j == -1 || dist[h] < dist[j])
+                        j = h;
+                }
+
+                if(j == -1)
+                    return q;
+
+                seen[j] = 1;
+
+                if(q_inv[j] == -1)
+                    break;
+
+                i = q_inv[j];
+                size_i = cost_adjlist[i].size();
+                for(int k = 0, h; k < size_i; k++)
+                {
+                    h = cost_adjlist[i][k].first;
+                    if(!seen[h])
+                    {
+                        const double new_dist = dist[j] + cost_adjlist[i][k].second - u[i] - v[h];
+                        if(new_dist < dist[h])
+                        {
+                            dist[h] = new_dist;
+                            dad[h] = j;
+                        }
+                    }
+                }
+            }
+
+            for(int h = 0; h < N; h++)
+            {
+                if(h != j && seen[h])
+                {
+                    const double delta = dist[h] - dist[j];
+                    v[h] += delta;
+                    u[q_inv[h]] -= delta;
+                }
+            }
+            u[s] += dist[j];
+
+            while(dad[j] >= 0)
+            {
+                const int d = dad[j];
+                q_inv[j] = q_inv[d];
+                q[q_inv[j]] = j;
+                j = d;
+            }
+            q_inv[j] = s;
+            q[s] = j;
+
+            mated++;
+        }
+
+        return q;
+    }*/
 
     // DEPRECATED:
-
-    VI min_cost_matching_adjlist_old(int N, vector<vector<PID>> &cost_adjlist)
+    VI min_cost_matching_adjlist_depr(int N, vector<vector<PID>> &cost_adjlist)
     {
-        function<bool(PID, PID)> comparator_PID = 
-        [](PID x1, PID x2)
-        {
-            if(x1.second < x2.second)
-                return true;
-            else if(x1.second > x2.second)
-                return false;
-            else
-                return x1.first < x2.first;
-         };
+        function<bool(PID, PID)> comparator_PID = [](PID x1, PID x2){ return (x1.second < x2.second); };
 
         // Construct dual feasible solution
         VD u(N, cost_max);
@@ -394,9 +1015,9 @@ namespace ha_core
         // Repeat until primal solution is feasible
         int s = -1;
         list<int>::iterator iter_s;
-        set<PID, function<bool(PID, PID)>> vertices_right_set(comparator_PID);
-        pair<bool, set<PID, function<bool(PID, PID)>>::iterator> default_pair = std::make_pair(false, vertices_right_set.end());
-        vector<pair<bool, set<PID, function<bool(PID, PID)>>::iterator>> active_vertices(N, default_pair);
+        set<PID, function<bool(PID, PID)>> dist_cache_ordered(comparator_PID);
+        pair<bool, set<PID, function<bool(PID, PID)>>::iterator> default_pair = std::make_pair(false, dist_cache_ordered.end());
+        vector<pair<bool, set<PID, function<bool(PID, PID)>>::iterator>> dist_active(N, default_pair);
         // repeat until primal solution is feasible
         while(mated < N)
         {
@@ -431,21 +1052,21 @@ namespace ha_core
             {
                 y = cost_adjlist[s][l].first;
                 dist[y] = cost_adjlist[s][l].second - u[s] - v[y];
-                if(active_vertices[y].first)
+                if(dist_active[y].first)
                 {
                     // The index y is already active:
                     // 1. Delete existing entry
-                    vertices_right_set.erase(active_vertices[y].second);
+                    dist_cache_ordered.erase(dist_active[y].second);
                     // 2. Add entry and set iterator
-                    active_vertices[y].second = vertices_right_set.insert(std::make_pair(y, dist[y])).first;
+                    dist_active[y].second = dist_cache_ordered.insert(std::make_pair(y, dist[y])).first;
                 }
                 else
                 {
                     // The index y is inactive
                     // 1. Set index active
-                    active_vertices[y].first = true;
+                    dist_active[y].first = true;
                     // 2. Add entry and set iterator
-                    active_vertices[y].second = vertices_right_set.insert(std::make_pair(y, dist[y])).first;
+                    dist_active[y].second = dist_cache_ordered.insert(std::make_pair(y, dist[y])).first;
                 }
             }
 
@@ -453,13 +1074,13 @@ namespace ha_core
             while(true)
             {
                 j = -1;
-                set<PID>::iterator iter_min = vertices_right_set.begin();
-                if(iter_min != vertices_right_set.end())
+                set<PID>::iterator iter_min = dist_cache_ordered.begin();
+                if(iter_min != dist_cache_ordered.end())
                 {
                     j = iter_min->first;
-                    active_vertices[j].first = false;
-                    active_vertices[j].second = vertices_right_set.end();
-                    vertices_right_set.erase(iter_min);
+                    dist_active[j].first = false;
+                    dist_active[j].second = dist_cache_ordered.end();
+                    dist_cache_ordered.erase(iter_min);
                     seen[j] = 1;
                 }
                 else
@@ -502,21 +1123,21 @@ namespace ha_core
                         {
                             dist[y] = new_dist;
                             dad[y] = j;
-                            if(active_vertices[y].first)
+                            if(dist_active[y].first)
                             {
                                 // The index y is already active:
                                 // 1. Delete existing entry
-                                vertices_right_set.erase(active_vertices[y].second);
+                                dist_cache_ordered.erase(dist_active[y].second);
                                 // 2. Add entry and set iterator
-                                active_vertices[y].second = vertices_right_set.insert(std::make_pair(y, dist[y])).first;
+                                dist_active[y].second = dist_cache_ordered.insert(std::make_pair(y, dist[y])).first;
                             }
                             else
                             {
                                 // The index y is inactive
                                 // 1. Set index active
-                                active_vertices[y].first = true;
+                                dist_active[y].first = true;
                                 // 2. Add entry and set iterator
-                                active_vertices[y].second = vertices_right_set.insert(std::make_pair(y, dist[y])).first;
+                                dist_active[y].second = dist_cache_ordered.insert(std::make_pair(y, dist[y])).first;
                             }
                         }
                     }
@@ -549,8 +1170,8 @@ namespace ha_core
                 q[s] = j;
 
                 mated++;
-                vertices_right_set.clear();
-                std::fill(active_vertices.begin(), active_vertices.end(), default_pair);
+                dist_cache_ordered.clear();
+                std::fill(dist_active.begin(), dist_active.end(), default_pair);
                 s = -1;
             }
         }
