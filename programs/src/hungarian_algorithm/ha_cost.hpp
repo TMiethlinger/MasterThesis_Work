@@ -7,6 +7,7 @@
 #include <functional> // std::function
 #include <utility> // std::pair
 #include <vector> // std::vector
+#include <list> // std::list
 
 #pragma once
 

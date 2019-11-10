@@ -4,6 +4,7 @@
 // University: Johannes Kepler University Linz, Austria
 
 #include <cmath>
+#include <functional>
 #include <vector>
 #include <list>
 #include <set>
