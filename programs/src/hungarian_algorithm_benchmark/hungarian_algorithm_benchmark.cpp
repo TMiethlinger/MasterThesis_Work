@@ -80,7 +80,7 @@ int main(int argc, char * argv[])
     {
         VVD cost_adjmatrix = ha_cost::create_costobject_adjmatrix(N, Xa, Xb, ha_distance::d_sum_3, l, v);
         auto start = high_resolution_clock::now();
-        VI q = ha_core::min_cost_matching_adjmatrix(cost_adjmatrix);
+        VI q = ha_core::min_cost_matching_adjmatrix(N, cost_adjmatrix);
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(stop - start);
         cout << N << " " << duration.count() << endl;
@@ -89,7 +89,7 @@ int main(int argc, char * argv[])
     {
         vector<vector<PID>> cost_adjlist = ha_cost::create_costobject_adjlist_plain(N, N_match, Xa, Xb, ha_distance::d_sum_3, l, v);
         auto start = high_resolution_clock::now();
-        VI q = ha_core::min_cost_matching_adjlist(cost_adjlist);
+        VI q = ha_core::min_cost_matching_adjlist_1(N, cost_adjlist);
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(stop - start);
         cout << N << " " << N_match << " " << duration.count() << endl;
