@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <fstream>
 #include <chrono>
+#include <list>
 #include <thread>
 #include <sys/stat.h>
 #include <string>
@@ -161,6 +162,32 @@ namespace io_util
         }
 
         return result;
+    }
+
+    std::list<std::pair<int,int>> read_result_times_discrete_distance(std::string filepathname)
+    {
+        std::list<std::pair<int, int>> result_times;
+        std::pair<int, int> row;
+        std::ifstream filestream;
+        filestream.open(filepathname);
+        if(filestream.is_open())
+        {
+            std::string line;
+            std::vector<std::string> parts;
+            for(int i = 0; std::getline(filestream, line); i++)
+            {
+                boost::split(parts, line, boost::is_any_of(" "));
+                row = std::make_pair(std::stoi(parts[0]), std::stoi(parts[1]));
+                result_times.push_back(row);
+            }
+            filestream.close();
+        }
+        else
+        {
+            std::cout << "Error: Could not read file " << filepathname << "!" << std::endl;
+        }
+
+        return result_times;
     }
 
     template <class T>
